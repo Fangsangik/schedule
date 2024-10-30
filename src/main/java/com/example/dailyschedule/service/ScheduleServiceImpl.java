@@ -88,6 +88,30 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(updateSchedule);
     }
 
+    @Transactional(readOnly = true)
+    public ScheduleDto findByDate(LocalDateTime date) {
+        Schedule findDate = scheduleRepositoryImpl.findByDate(date);
+
+        if (findDate == null) {
+            throw new IllegalArgumentException("해당 날짜에 대한 값이 존재하지 않습니다.");
+        }
+
+        return scheduleConverter.toDto(findDate);
+    }
+
+    //Lv2
+    @Transactional
+    public ScheduleDto updatedDateByAuthorAndTitle(ScheduleDto scheduleDto) {
+        if (scheduleDto.getUpdatedAt() == null || scheduleDto.getAuthor() == null || scheduleDto.getTitle() == null) {
+            throw new IllegalArgumentException("해당 값이 null 이면 안됩니다.");
+        }
+
+        Schedule existSchedule = scheduleRepositoryImpl.findScheduleById(scheduleDto.getId());
+        Schedule updatedSchedule = existSchedule.updateByScheduleDto(scheduleDto);
+        Schedule updated = scheduleRepositoryImpl.updateSchedule(updatedSchedule);
+
+        return scheduleConverter.toDto(updated);
+    }
 
     @Transactional
     public void deleteById(Long id) {
