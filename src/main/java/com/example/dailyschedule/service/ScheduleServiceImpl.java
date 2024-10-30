@@ -4,19 +4,13 @@ import com.example.dailyschedule.converter.ScheduleConverter;
 import com.example.dailyschedule.domain.Schedule;
 import com.example.dailyschedule.dto.ScheduleDto;
 import com.example.dailyschedule.repository.ScheduleRepositoryImpl;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
-@RequiredArgsConstructor
 public class ScheduleServiceImpl {
 
     private final ScheduleRepositoryImpl scheduleRepositoryImpl;
@@ -38,10 +32,6 @@ public class ScheduleServiceImpl {
 
     @Transactional(readOnly = true)
     public ScheduleDto findById(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("Id는 null 이면 안됩니다");
-        }
-
         // ScheduleRepository에서 id로 Schedule 객체를 찾고, ScheduleDto로 변환하여 반환
         Schedule schedule = scheduleRepositoryImpl.findScheduleById(id);
 
@@ -54,15 +44,15 @@ public class ScheduleServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    public ScheduleDto findByUpdatedAt_author (LocalDate updatedAt, String author) {
+    public ScheduleDto findByUpdatedAt_author (LocalDateTime updatedAt, String author) {
         if (updatedAt == null && author == null) {
             throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
         }
 
-        Schedule byUpdateAndAuthor = scheduleRepositoryImpl.findByUpdateAndAuthor(updatedAt, author);
+        Schedule byUpdateAndAuthor = scheduleRepositoryImpl.findAllByUpdatedDateAndAuthor(updatedAt, author);
 
         if (byUpdateAndAuthor == null) {
-            throw new IllegalArgumentException("updated date and author is null");
+            throw new IllegalArgumentException("updated date and author기 null");
         }
 
         return scheduleConverter.toDto(byUpdateAndAuthor);
