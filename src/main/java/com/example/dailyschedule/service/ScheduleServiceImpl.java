@@ -120,11 +120,10 @@ public class ScheduleServiceImpl {
     }
 
     @Transactional
-    public void deleteById(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("Id는 null 이면 안됩니다");
-        }
+    public void deleteById(ScheduleDto scheduleDto) {
+        Schedule exsitSchedule = scheduleRepositoryImpl.findScheduleById(scheduleDto.getId());
 
-        scheduleRepositoryImpl.deleteScheduleById(id);
+        Schedule deleteSchedule = exsitSchedule.deleteByScheduleById(scheduleDto);
+        scheduleRepositoryImpl.deleteScheduleById(deleteSchedule.getId());
     }
 }
