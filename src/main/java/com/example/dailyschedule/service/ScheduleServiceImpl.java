@@ -22,6 +22,12 @@ public class ScheduleServiceImpl {
     private final ScheduleRepositoryImpl scheduleRepositoryImpl;
     private final ScheduleConverter scheduleConverter;
 
+    //생성자 주입
+    public ScheduleServiceImpl(ScheduleRepositoryImpl scheduleRepositoryImpl, ScheduleConverter scheduleConverter) {
+        this.scheduleRepositoryImpl = scheduleRepositoryImpl;
+        this.scheduleConverter = scheduleConverter;
+    }
+
 
     @Transactional
     public ScheduleDto create(ScheduleDto scheduleDto) {
