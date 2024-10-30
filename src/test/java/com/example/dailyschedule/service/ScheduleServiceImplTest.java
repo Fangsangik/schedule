@@ -5,17 +5,17 @@ import com.example.dailyschedule.domain.Schedule;
 import com.example.dailyschedule.dto.ScheduleDto;
 import com.example.dailyschedule.repository.ScheduleRepositoryImpl;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.stereotype.Component;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,8 +42,8 @@ class ScheduleServiceImplTest {
                 .title("test title")
                 .description("test description")
                 .author("test author")
-                .createdAt(LocalDate.now())
-                .updatedAt(LocalDate.now())
+                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .password("TestPassword")
                 .build();
 
@@ -60,7 +60,7 @@ class ScheduleServiceImplTest {
     }
 
     @Test
-    @Commit
+    @Transactional
     void findById() {
         // 새로운 ScheduleDto 객체 생성
         schedule = ScheduleDto.builder()
@@ -68,8 +68,8 @@ class ScheduleServiceImplTest {
                 .title("test title")
                 .description("test description")
                 .author("test author")
-                .createdAt(LocalDate.now())
-                .updatedAt(LocalDate.now())
+                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .password("TestPassword")
                 .build();
 
@@ -94,8 +94,8 @@ class ScheduleServiceImplTest {
                 .title("test title")
                 .description("test description")
                 .author("test author")
-                .createdAt(LocalDate.now())
-                .updatedAt(LocalDate.now())
+                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .password("TestPassword")
                 .build();
         // Schedule 생성 및 저장
@@ -108,8 +108,8 @@ class ScheduleServiceImplTest {
                 .title("updated title")
                 .description("updated description")
                 .author("updated author")
-                .createdAt(createdSchedule.getCreatedAt())
-                .updatedAt(LocalDate.now())
+                .createdAt(schedule.getCreatedAt())
+                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .password("updated password")
                 .build();
 
@@ -133,8 +133,8 @@ class ScheduleServiceImplTest {
                 .title("test title")
                 .description("test description")
                 .author("test author")
-                .createdAt(LocalDate.now())
-                .updatedAt(LocalDate.now())
+                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .password("TestPassword")
                 .build();
         // Schedule 생성 및 저장
@@ -142,11 +142,12 @@ class ScheduleServiceImplTest {
         assertNotNull(createdSchedule);
 
         // Schedule 삭제
-        scheduleService.deleteById(createdSchedule.getId());
+        scheduleService.deleteById(createdSchedule);
 
-        // 삭제 확인
-        ScheduleDto deletedSchedule = scheduleService.findById(createdSchedule.getId());
-        Assertions.assertNull(deletedSchedule);
+        // 삭제 후 스케줄 찾기 시도
+        assertThrows(EmptyResultDataAccessException.class, () -> {
+            scheduleService.findById(createdSchedule.getId());
+        });
     }
 
     @Test
@@ -156,8 +157,8 @@ class ScheduleServiceImplTest {
                 .title("test title")
                 .description("test description")
                 .author("test author")
-                .createdAt(LocalDate.now())
-                .updatedAt(LocalDate.now())
+                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .password("TestPassword")
                 .build();
 
@@ -176,8 +177,8 @@ class ScheduleServiceImplTest {
                 .title("First Test Title")
                 .description("First Test Description")
                 .author("Author1")
-                .createdAt(LocalDate.of(2024, 7, 1))
-                .updatedAt(LocalDate.of(2024, 7, 10))  // 최신 날짜
+                .createdAt(LocalDateTime.of(2024, 07, 01, 00,00))
+                .updatedAt(LocalDateTime.of(2024, 07, 10,00,00))  // 최신 날짜
                 .password("password1")
                 .build();
 
@@ -185,8 +186,8 @@ class ScheduleServiceImplTest {
                 .title("Second Test Title")
                 .description("Second Test Description")
                 .author("Author2")
-                .createdAt(LocalDate.of(2024, 6, 1))
-                .updatedAt(LocalDate.of(2024, 7, 5))
+                .createdAt(LocalDateTime.of(2024, 06, 01,00,00))
+                .updatedAt(LocalDateTime.of(2024, 07, 05,00,00))
                 .password("password2")
                 .build();
 
@@ -194,8 +195,8 @@ class ScheduleServiceImplTest {
                 .title("Third Test Title")
                 .description("Third Test Description")
                 .author("Author3")
-                .createdAt(LocalDate.of(2024, 5, 1))
-                .updatedAt(LocalDate.of(2024, 7, 1))  // 가장 오래된 날짜
+                .createdAt(LocalDateTime.of(2024, 05, 01,00,00))
+                .updatedAt(LocalDateTime.of(2024, 07, 01,00,00))  // 가장 오래된 날짜
                 .password("password3")
                 .build();
         scheduleService.create(schedule1);
@@ -205,12 +206,71 @@ class ScheduleServiceImplTest {
         List<ScheduleDto> scheduleDtoList = scheduleService.findByUpdatedDateDesc();
 
         assertFalse(scheduleDtoList.isEmpty());
-        assertThat(scheduleDtoList.size()).isEqualTo(6);
+        assertThat(scheduleDtoList.size()).isEqualTo(3);
 
         // 최신 updatedAt이 가장 첫 번째에 오는지 확인
-        assertThat(scheduleDtoList.get(0).getUpdatedAt()).isEqualTo(LocalDate.of(2024, 7, 10));
-        assertThat(scheduleDtoList.get(1).getUpdatedAt()).isEqualTo(LocalDate.of(2024, 7, 10));
-        assertThat(scheduleDtoList.get(2).getUpdatedAt()).isEqualTo(LocalDate.of(2024, 7, 05));
-
+        assertThat(scheduleDtoList.get(0).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 10, 00,00));
+        assertThat(scheduleDtoList.get(1).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 05,00,00));
+        assertThat(scheduleDtoList.get(2).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 01,00,00));
     }
+
+    @Test
+    void findDate() {
+        scheduleRepository.deleteAll();
+        ScheduleDto schedule = ScheduleDto.builder()
+                .title("First Test Title")
+                .description("First Test Description")
+                .author("Author1")
+                .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
+                .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))  // 최신 날짜
+                .password("password1")
+                .build();
+
+        ScheduleDto createSchedule = scheduleService.create(schedule);
+        ScheduleDto findDate = scheduleService.findByDate(createSchedule.getCreatedAt());
+        ScheduleDto updatedDate = scheduleService.findByDate(createSchedule.getUpdatedAt());
+        assertThat(findDate.getCreatedAt()).isEqualTo(LocalDateTime.of(2024,07,01,00,00));
+        assertThat(updatedDate.getUpdatedAt()).isEqualTo(LocalDateTime.of(2024,07,10,00,00));
+    }
+
+    @Test
+    void updatedDateByAuthorAndTitle() {
+        // 1. 데이터 초기화
+        scheduleRepository.deleteAll();
+
+        // 2. 초기 스케줄 생성
+        ScheduleDto schedule1 = ScheduleDto.builder()
+                .title("First Test Title")
+                .description("First Test Description")
+                .author("Author1")
+                .createdAt(LocalDateTime.of(2024, 07, 01,00,00))
+                .updatedAt(LocalDateTime.of(2024, 07, 10,00,00))  // 최신 날짜
+                .password("password1")
+                .build();
+
+        // 스케줄 생성
+        ScheduleDto createdSchedule = scheduleService.create(schedule1);
+
+        // 3. 업데이트할 데이터 설정
+        ScheduleDto updateSchedule = ScheduleDto.builder()
+                .id(createdSchedule.getId())
+                .title("Second Test Title")
+                .description(createdSchedule.getDescription())
+                .author("Author2")
+                .createdAt(createdSchedule.getCreatedAt())
+                .updatedAt(LocalDateTime.of(2024, 07, 11,00,00))  // 최신 날짜
+                .password(createdSchedule.getPassword())
+                .build();
+
+        // 4. 업데이트 수행
+        ScheduleDto updated = scheduleService.updatedDateByAuthorAndTitle(updateSchedule);
+
+        // 5. 검증
+        assertThat(updated.getId()).isEqualTo(createdSchedule.getId());
+        assertThat(updated.getTitle()).isEqualTo("Second Test Title");
+        assertThat(updated.getDescription()).isEqualTo(createdSchedule.getDescription());
+        assertThat(updated.getAuthor()).isEqualTo("Author2");
+        assertThat(updated.getPassword()).isEqualTo(createdSchedule.getPassword());
+    }
+
 }
