@@ -71,9 +71,12 @@ public class ScheduleRepositoryImpl {
 
     public Schedule findScheduleById(Long id) {
         // 필요한 모든 필드를 조회하도록 쿼리 작성
-        String sql = "SELECT id, author, title, password, description, createdAt, updatedAt, deletedAt FROM schedule WHERE id = ?";
-
-        return jdbcTemplate.queryForObject(sql, new Object[]{id}, scheduleRowMapper());
+        String sql = "SELECT * FROM schedule WHERE id = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{id}, scheduleRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            return null;  // 조회 결과가 없을 경우 null 반환
+        }
     }
 
 
