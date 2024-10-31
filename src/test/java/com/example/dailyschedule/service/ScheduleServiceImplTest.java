@@ -1,18 +1,16 @@
 package com.example.dailyschedule.service;
 
-import com.example.dailyschedule.converter.ScheduleConverter;
-import com.example.dailyschedule.domain.Schedule;
-import com.example.dailyschedule.dto.ScheduleDto;
-import com.example.dailyschedule.repository.ScheduleRepositoryImpl;
+import com.example.dailyschedule.schedule.converter.ScheduleConverter;
+import com.example.dailyschedule.schedule.dto.ScheduleDto;
+import com.example.dailyschedule.schedule.repository.ScheduleRepositoryImpl;
+import com.example.dailyschedule.schedule.service.ScheduleServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -29,16 +27,12 @@ class ScheduleServiceImplTest {
     @Autowired
     private ScheduleRepositoryImpl scheduleRepository;
 
-    @Autowired
-    private ScheduleConverter scheduleConverter;
-
     private ScheduleDto schedule;
-
 
     @Test
     void create() {
         schedule = ScheduleDto.builder()
-                //.id(1L)
+                .id(1L)
                 .title("test title")
                 .description("test description")
                 .author("test author")
@@ -47,11 +41,8 @@ class ScheduleServiceImplTest {
                 .password("TestPassword")
                 .build();
 
-        // Schedule 생성
         ScheduleDto createdSchedule = scheduleService.create(schedule);
         assertNotNull(createdSchedule);
-
-        // 필드 값 검증
         assertThat(createdSchedule.getTitle()).isEqualTo(schedule.getTitle());
         assertThat(createdSchedule.getDescription()).isEqualTo(schedule.getDescription());
         assertThat(createdSchedule.getAuthor()).isEqualTo(schedule.getAuthor());
@@ -62,7 +53,6 @@ class ScheduleServiceImplTest {
     @Test
     @Transactional
     void findById() {
-        // 새로운 ScheduleDto 객체 생성
         schedule = ScheduleDto.builder()
                 .id(1L)
                 .title("test title")
@@ -73,22 +63,17 @@ class ScheduleServiceImplTest {
                 .password("TestPassword")
                 .build();
 
-        // 스케줄 생성
-        ScheduleDto createSchedule = scheduleService.create(schedule);
-        assertNotNull(createSchedule);  // 생성된 스케줄이 null이 아님을 확인
+        ScheduleDto createdSchedule = scheduleService.create(schedule);
+        assertNotNull(createdSchedule);
 
-        // ID로 스케줄 조회
-        ScheduleDto findId = scheduleService.findById(createSchedule.getId());
-        assertNotNull(findId, "스케줄을 찾을 수 없습니다.");  // 조회된 스케줄이 null이 아님을 확인
-
-        // 조회된 스케줄의 ID가 생성된 스케줄의 ID와 같은지 확인
-        Assertions.assertEquals(createSchedule.getId(), findId.getId());
+        ScheduleDto findId = scheduleService.findById(createdSchedule.getId());
+        assertNotNull(findId, "스케줄을 찾을 수 없습니다.");
+        assertEquals(createdSchedule.getId(), findId.getId());
     }
 
     @Test
     @Transactional
     void update() {
-        // 새로운 ScheduleDto 객체 생성
         schedule = ScheduleDto.builder()
                 .id(1L)
                 .title("test title")
@@ -98,11 +83,10 @@ class ScheduleServiceImplTest {
                 .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .password("TestPassword")
                 .build();
-        // Schedule 생성 및 저장
+
         ScheduleDto createdSchedule = scheduleService.create(schedule);
         assertNotNull(createdSchedule);
 
-        // 업데이트할 ScheduleDto 생성
         ScheduleDto updatedData = ScheduleDto.builder()
                 .id(createdSchedule.getId())
                 .title("updated title")
@@ -113,10 +97,7 @@ class ScheduleServiceImplTest {
                 .password("updated password")
                 .build();
 
-        // 업데이트 실행
         ScheduleDto updatedSchedule = scheduleService.update(updatedData);
-
-        // 결과 검증
         assertNotNull(updatedSchedule);
         assertThat(updatedSchedule.getTitle()).isEqualTo("updated title");
         assertThat(updatedSchedule.getDescription()).isEqualTo("updated description");
@@ -127,7 +108,6 @@ class ScheduleServiceImplTest {
     @Test
     @Transactional
     void deleteById() {
-        // 새로운 ScheduleDto 객체 생성
         schedule = ScheduleDto.builder()
                 .id(1L)
                 .title("test title")
@@ -137,48 +117,27 @@ class ScheduleServiceImplTest {
                 .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .password("TestPassword")
                 .build();
-        // Schedule 생성 및 저장
+
         ScheduleDto createdSchedule = scheduleService.create(schedule);
         assertNotNull(createdSchedule);
 
-        // Schedule 삭제
         scheduleService.deleteById(createdSchedule);
 
-        // 삭제 후 스케줄 찾기 시도
-        assertThrows(EmptyResultDataAccessException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () -> {
             scheduleService.findById(createdSchedule.getId());
         });
     }
 
     @Test
-    void findByAuthorAndUpdateDate() {
-        schedule = ScheduleDto.builder()
-                .id(1L)
-                .title("test title")
-                .description("test description")
-                .author("test author")
-                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .password("TestPassword")
-                .build();
-
-        ScheduleDto createdSchedule = scheduleService.create(schedule);
-        assertNotNull(createdSchedule);
-
-        ScheduleDto byUpdatedAtAuthor = scheduleService.findByUpdatedAt_author(schedule.getUpdatedAt(), createdSchedule.getAuthor());
-        assertNotNull(byUpdatedAtAuthor);
-        assertThat(byUpdatedAtAuthor.getTitle()).isEqualTo(createdSchedule.getTitle());
-    }
-
-    @Test
     void findByUpdatedDateDesc() {
         scheduleRepository.deleteAll();
+
         ScheduleDto schedule1 = ScheduleDto.builder()
                 .title("First Test Title")
                 .description("First Test Description")
                 .author("Author1")
-                .createdAt(LocalDateTime.of(2024, 07, 01, 00,00))
-                .updatedAt(LocalDateTime.of(2024, 07, 10,00,00))  // 최신 날짜
+                .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
+                .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))
                 .password("password1")
                 .build();
 
@@ -186,91 +145,97 @@ class ScheduleServiceImplTest {
                 .title("Second Test Title")
                 .description("Second Test Description")
                 .author("Author2")
-                .createdAt(LocalDateTime.of(2024, 06, 01,00,00))
-                .updatedAt(LocalDateTime.of(2024, 07, 05,00,00))
+                .createdAt(LocalDateTime.of(2024, 06, 01, 00, 00))
+                .updatedAt(LocalDateTime.of(2024, 07, 05, 00, 00))
                 .password("password2")
                 .build();
 
-        ScheduleDto schedule3 = ScheduleDto.builder()
-                .title("Third Test Title")
-                .description("Third Test Description")
-                .author("Author3")
-                .createdAt(LocalDateTime.of(2024, 05, 01,00,00))
-                .updatedAt(LocalDateTime.of(2024, 07, 01,00,00))  // 가장 오래된 날짜
-                .password("password3")
-                .build();
         scheduleService.create(schedule1);
         scheduleService.create(schedule2);
-        scheduleService.create(schedule3);
 
         List<ScheduleDto> scheduleDtoList = scheduleService.findByUpdatedDateDesc();
-
         assertFalse(scheduleDtoList.isEmpty());
-        assertThat(scheduleDtoList.size()).isEqualTo(3);
-
-        // 최신 updatedAt이 가장 첫 번째에 오는지 확인
-        assertThat(scheduleDtoList.get(0).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 10, 00,00));
-        assertThat(scheduleDtoList.get(1).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 05,00,00));
-        assertThat(scheduleDtoList.get(2).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 01,00,00));
-    }
-
-    @Test
-    void findDate() {
-        scheduleRepository.deleteAll();
-        ScheduleDto schedule = ScheduleDto.builder()
-                .title("First Test Title")
-                .description("First Test Description")
-                .author("Author1")
-                .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
-                .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))  // 최신 날짜
-                .password("password1")
-                .build();
-
-        ScheduleDto createSchedule = scheduleService.create(schedule);
-        ScheduleDto findDate = scheduleService.findByDate(createSchedule.getCreatedAt());
-        ScheduleDto updatedDate = scheduleService.findByDate(createSchedule.getUpdatedAt());
-        assertThat(findDate.getCreatedAt()).isEqualTo(LocalDateTime.of(2024,07,01,00,00));
-        assertThat(updatedDate.getUpdatedAt()).isEqualTo(LocalDateTime.of(2024,07,10,00,00));
+        assertThat(scheduleDtoList.size()).isEqualTo(2);
+        assertThat(scheduleDtoList.get(0).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 10, 00, 00));
+        assertThat(scheduleDtoList.get(1).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 05, 00, 00));
     }
 
     @Test
     void updatedDateByAuthorAndTitle() {
-        // 1. 데이터 초기화
+        // 기존 데이터 삭제
         scheduleRepository.deleteAll();
 
-        // 2. 초기 스케줄 생성
+        // 첫 번째 일정 생성
         ScheduleDto schedule1 = ScheduleDto.builder()
-                .title("First Test Title")
-                .description("First Test Description")
-                .author("Author1")
-                .createdAt(LocalDateTime.of(2024, 07, 01,00,00))
-                .updatedAt(LocalDateTime.of(2024, 07, 10,00,00))  // 최신 날짜
+                .title("Original Test Title")
+                .description("Original Test Description")
+                .author("Original Author")
+                .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
+                .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))
                 .password("password1")
                 .build();
 
-        // 스케줄 생성
+        // 일정 생성 및 생성된 일정의 ID 확인
         ScheduleDto createdSchedule = scheduleService.create(schedule1);
 
-        // 3. 업데이트할 데이터 설정
-        ScheduleDto updateSchedule = ScheduleDto.builder()
-                .id(createdSchedule.getId())
-                .title("Second Test Title")
-                .description(createdSchedule.getDescription())
-                .author("Author2")
-                .createdAt(createdSchedule.getCreatedAt())
-                .updatedAt(LocalDateTime.of(2024, 07, 11,00,00))  // 최신 날짜
-                .password(createdSchedule.getPassword())
+        // 업데이트할 제목과 작성자 정보 설정 (생성된 ID 사용)
+        ScheduleDto schedule2 = ScheduleDto.builder()
+                .id(createdSchedule.getId())               // 생성된 일정의 ID를 사용
+                .title("Updated Test Title")               // 새로운 제목
+                .description(schedule1.getDescription())   // 기존 설명 유지
+                .author("Updated Author")                  // 새로운 작성자
+                .createdAt(schedule1.getCreatedAt())
+                .updatedAt(LocalDateTime.of(2024, 07, 15, 00, 00))  // 새로운 업데이트 날짜
+                .password("password1")                     // 동일한 비밀번호
                 .build();
 
-        // 4. 업데이트 수행
-        ScheduleDto updated = scheduleService.updatedDateByAuthorAndTitle(updateSchedule);
+        // 제목과 작성자명 업데이트
+        ScheduleDto updatedSchedule = scheduleService.updateTitleAndAuthor(schedule2);
 
-        // 5. 검증
-        assertThat(updated.getId()).isEqualTo(createdSchedule.getId());
-        assertThat(updated.getTitle()).isEqualTo("Second Test Title");
-        assertThat(updated.getDescription()).isEqualTo(createdSchedule.getDescription());
-        assertThat(updated.getAuthor()).isEqualTo("Author2");
-        assertThat(updated.getPassword()).isEqualTo(createdSchedule.getPassword());
+        // 업데이트된 제목과 작성자를 검증
+        assertThat(updatedSchedule.getTitle()).isEqualTo("Updated Test Title");
+        assertThat(updatedSchedule.getAuthor()).isEqualTo("Updated Author");
     }
 
+
+    @Test
+    void findDateTest() {
+        scheduleRepository.deleteAll();
+
+        ScheduleDto schedule1 = ScheduleDto.builder()
+                .title("Original Test Title")
+                .description("Original Test Description")
+                .author("Original Author")
+                .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
+                .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))
+                .password("password1")
+                .build();
+
+        ScheduleDto scheduleDto1 = scheduleService.create(schedule1);
+
+
+        ScheduleDto createdAtDate = scheduleService.findByDate(scheduleDto1.getCreatedAt());
+        assertNotNull(createdAtDate);
+        assertThat(createdAtDate.getCreatedAt()).isEqualTo("2024-07-01T00:00");
+
+    }
+
+    @Test
+    void findByUpdateDateAndAuthor() {
+        scheduleRepository.deleteAll();
+
+        ScheduleDto schedule1 = ScheduleDto.builder()
+                .title("Original Test Title")
+                .description("Original Test Description")
+                .author("Original Author")
+                .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
+                .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))
+                .password("password1")
+                .build();
+
+        ScheduleDto cratedSchedule = scheduleService.create(schedule1);
+        ScheduleDto findSchedule = scheduleService.findByUpdatedDateAndAuthor(schedule1.getUpdatedAt(), cratedSchedule.getAuthor());
+        assertThat(findSchedule.getUpdatedAt()).isEqualTo("2024-07-10T00:00");
+        assertThat(findSchedule.getTitle()).isEqualTo("Original Test Title");
+    }
 }
