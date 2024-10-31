@@ -19,7 +19,9 @@ public class ScheduleRepositoryImpl {
 
 
     public Schedule createSchedule(Schedule schedule) {
-        String sql = "INSERT INTO schedule (author, title, createdAt, password, description, updatedAt, deletedAt) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+
+        String sql = "INSERT INTO schedule (author, title, created_at, password, description, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         jdbcTemplate.update(sql,
                 schedule.getAuthor(),
@@ -48,7 +50,7 @@ public class ScheduleRepositoryImpl {
             throw new IllegalArgumentException("해당 id가 존재하지 않습니다.");
         }
 
-        String sql = "UPDATE schedule SET title = ?, author = ?, description = ?, updatedAt = ?, password = ?, createdAt = ?, deletedAt = ? WHERE id = ?";
+        String sql = "UPDATE schedule SET title = ?, author = ?, description = ?, updated_at = ?, password = ?, created_at = ?, deleted_at = ? WHERE id = ?";
 
         int updatedRows = jdbcTemplate.update(sql,
                 schedule.getTitle(),
@@ -102,7 +104,7 @@ public class ScheduleRepositoryImpl {
             throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
         }
 
-        String sql = "SELECT * FROM schedule WHERE (updatedAt = ? OR ? IS NULL) AND (author = ? OR ? IS NULL) ORDER BY updatedAt DESC";
+        String sql = "SELECT * FROM schedule WHERE (updated_at = ? OR ? IS NULL) or (author = ? OR ? IS NULL) ORDER BY updated_at DESC";
 
         return jdbcTemplate.queryForObject(sql, new Object[]{updatedAt, updatedAt
                 , author, author}, scheduleRowMapper());
@@ -110,7 +112,7 @@ public class ScheduleRepositoryImpl {
 
 
     public List<Schedule> findAllOrderByUpdatedDateDesc() {
-        String sql = "SELECT id, author, title, password, description, createdAt, updatedAt, deletedAt FROM schedule ORDER BY updatedAt DESC";
+        String sql = "SELECT * FROM schedule ORDER BY updated_at DESC";
         return jdbcTemplate.query(sql, scheduleRowMapper());
     }
 
@@ -119,8 +121,8 @@ public class ScheduleRepositoryImpl {
         if (date == null) {
             throw new IllegalArgumentException("해당 날짜가 없습니다.");
         }
-        String sql = "SELECT id, title, author, password, description, createdAt, updatedAt, deletedAt FROM schedule " +
-                "WHERE createdAt = ? OR updatedAt = ? OR deletedAt = ?";
+        String sql = "SELECT * FROM schedule " +
+                "WHERE created_at = ? OR updated_at = ? OR deleted_at = ?";
 
         return jdbcTemplate.queryForObject(sql, new Object[]{date, date, date}, scheduleRowMapper());
     }
