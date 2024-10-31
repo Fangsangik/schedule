@@ -1,5 +1,6 @@
-package com.example.dailyschedule.dto;
+package com.example.dailyschedule.schedule.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,7 +15,10 @@ public class ScheduleDto {
     private String author; //작성자
     private String password; //비말번호
     private String description; //상세 내용
+    @JsonFormat(pattern = "HH:MM")
     private LocalDateTime createdAt; //생성 날짜
+    @JsonFormat(pattern = "HH:MM")
     private LocalDateTime updatedAt; //수정 날짜
+    @JsonFormat(pattern = "HH:MM")
     private LocalDateTime deletedAt; //삭제 날짜
 }
