@@ -26,4 +26,5 @@ public class Schedule {
     private LocalDateTime updatedAt; //수정 날짜
     @JsonFormat(pattern = "HH:mm")
     private LocalDateTime deletedAt; //삭제 날짜
+    private Member member;
 }
