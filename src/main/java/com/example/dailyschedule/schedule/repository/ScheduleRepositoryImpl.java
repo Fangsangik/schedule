@@ -1,6 +1,7 @@
-package com.example.dailyschedule.repository;
+package com.example.dailyschedule.schedule.repository;
 
-import com.example.dailyschedule.domain.Schedule;
+import com.example.dailyschedule.schedule.entity.Schedule;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -103,7 +104,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    public Schedule findAllByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author) {
+    public Schedule findByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author) {
         if (updatedAt == null && author == null) {
             throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
         }
@@ -132,7 +133,6 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    //Schdeule Maopper
     private RowMapper<Schedule> scheduleRowMapper() {
         return (rs, rowNum) -> Schedule.builder()
                 .id(rs.getLong("id"))
@@ -140,9 +140,10 @@ public class ScheduleRepositoryImpl {
                 .title(rs.getString("title"))
                 .password(rs.getString("password"))
                 .description(rs.getString("description"))
-                .createdAt(rs.getObject("createdAt", LocalDateTime.class))
-                .updatedAt(rs.getObject("updatedAt", LocalDateTime.class))
-                .deletedAt(rs.getObject("deletedAt", LocalDateTime.class))
+                .createdAt(rs.getObject("created_at", LocalDateTime.class))
+                .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
+                .deletedAt(rs.getObject("deleted_at", LocalDateTime.class))
                 .build();
     }
+
 }
