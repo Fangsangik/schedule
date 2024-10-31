@@ -1,5 +1,7 @@
 package com.example.dailyschedule.schedule.dto;
 
+import com.example.dailyschedule.member.dto.MemberDto;
+import com.example.dailyschedule.member.entity.Member;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,4 +23,5 @@ public class ScheduleDto {
     private LocalDateTime updatedAt; //수정 날짜
     @JsonFormat(pattern = "HH:MM")
     private LocalDateTime deletedAt; //삭제 날짜
+    private MemberDto memberDto;
 }
