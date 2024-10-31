@@ -1,5 +1,6 @@
 package com.example.dailyschedule.schedule.repository;
 
+import com.example.dailyschedule.member.entity.Member;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -22,7 +23,7 @@ public class ScheduleRepositoryImpl {
     public Schedule createSchedule(Schedule schedule) {
 
 
-        String sql = "INSERT INTO schedule (author, title, created_at, password, description, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO schedule (author, title, created_at, password, description, updated_at, deleted_at, member_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         jdbcTemplate.update(sql,
                 schedule.getAuthor(),
@@ -31,7 +32,8 @@ public class ScheduleRepositoryImpl {
                 schedule.getPassword(),
                 schedule.getDescription(),
                 schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now(),
-                schedule.getDeletedAt()
+                schedule.getDeletedAt(),
+                schedule.getMember().getId()
         );
         //최근 추가된 ID 조회
         Long generatedId = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
@@ -44,6 +46,7 @@ public class ScheduleRepositoryImpl {
                 .createdAt(schedule.getCreatedAt())  // DTO에서 설정된 createdAt 사용
                 .updatedAt(schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now())  // DTO에서 설정된 updatedAt 사용 없으면 현재 시간 반영
                 .deletedAt(schedule.getDeletedAt())
+                .member(schedule.getMember())
                 .build();
     }
 
@@ -52,7 +55,7 @@ public class ScheduleRepositoryImpl {
             throw new IllegalArgumentException("해당 id가 존재하지 않습니다.");
         }
 
-        String sql = "UPDATE schedule SET title = ?, author = ?, description = ?, updated_at = ?, password = ?, created_at = ?, deleted_at = ? WHERE id = ?";
+        String sql = "UPDATE schedule SET title = ?, author = ?, description = ?, updated_at = ?, password = ?, created_at = ?, deleted_at = ?, member_id = ? WHERE id = ?";
 
         int updatedRows = jdbcTemplate.update(sql,
                 schedule.getTitle(),
@@ -62,6 +65,7 @@ public class ScheduleRepositoryImpl {
                 schedule.getPassword(),
                 schedule.getCreatedAt(),
                 schedule.getDeletedAt(),
+                schedule.getMember().getId(),
                 schedule.getId());  // 마지막 파라미터로 id 추가
         if (updatedRows == 0) {
             throw new IllegalArgumentException("업데이트 실패");
@@ -133,17 +137,44 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    private RowMapper<Schedule> scheduleRowMapper() {
-        return (rs, rowNum) -> Schedule.builder()
-                .id(rs.getLong("id"))
-                .author(rs.getString("author"))
-                .title(rs.getString("title"))
-                .password(rs.getString("password"))
-                .description(rs.getString("description"))
-                .createdAt(rs.getObject("created_at", LocalDateTime.class))
-                .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
-                .deletedAt(rs.getObject("deleted_at", LocalDateTime.class))
-                .build();
+    public List<Schedule> findSchedulesByMemberId(Long memberId) {
+        if (memberId == null) {
+            throw new IllegalArgumentException("해당 회원 아이디가 존재하지 않습니다.");
+        }
+
+        String sql = "select * from schedule s left join member m on s.member_id = m.id where m.id = ?";
+
+        return jdbcTemplate.query(sql, new Object[]{memberId}, scheduleRowMapper());
     }
 
+    public Schedule findSingleScheduleByMemberId(Long memberId) {
+        String sql = "SELECT * FROM schedule s LEFT JOIN member m ON s.member_id = m.id WHERE m.id = ? LIMIT 1";
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{memberId}, scheduleRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+
+    private RowMapper<Schedule> scheduleRowMapper() {
+        return (rs, rowNum) -> {
+            Long memberId = rs.getLong("member_id");
+
+            // 필요한 경우 memberId로 Member 객체 생성 또는 조회
+            Member member = Member.builder().id(memberId).build();
+
+            return Schedule.builder()
+                    .id(rs.getLong("id"))
+                    .author(rs.getString("author"))
+                    .title(rs.getString("title"))
+                    .password(rs.getString("password"))
+                    .description(rs.getString("description"))
+                    .createdAt(rs.getObject("created_at", LocalDateTime.class))
+                    .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
+                    .deletedAt(rs.getObject("deleted_at", LocalDateTime.class))
+                    .member(member)  // member_id를 설정한 Member 객체 설정
+                    .build();
+        };
+    }
 }
