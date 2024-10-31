@@ -1,7 +1,7 @@
-package com.example.dailyschedule.converter;
+package com.example.dailyschedule.schedule.converter;
 
-import com.example.dailyschedule.domain.Schedule;
-import com.example.dailyschedule.dto.ScheduleDto;
+import com.example.dailyschedule.schedule.entity.Schedule;
+import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import org.springframework.stereotype.Component;
 
 @Component
