@@ -54,3 +54,14 @@ select * from schedule
 
 # 날짜로 찾기
 select * from schedule where updated_at = '2024-11-01-00-03';
+
+# 회원 table 생성
+create table member (
+    id BIGINT not null primary key,
+    userId varchar(25) not null,
+    email varchar(50) not null,
+    updated_at DATETIME null,
+    name varchar(25) not null
+);
+
+alter table member change userId user_id varchar(25) not null;
