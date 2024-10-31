@@ -1,4 +1,7 @@
 package com.example.dailyschedule.schedule.validation;
+import com.example.dailyschedule.member.dto.MemberDto;
+import com.example.dailyschedule.member.entity.Member;
+import com.example.dailyschedule.member.repository.MemberRepository;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import com.example.dailyschedule.schedule.repository.ScheduleRepositoryImpl;
@@ -8,9 +11,11 @@ import java.time.LocalDateTime;
 public class ScheduleValidation {
 
     private final ScheduleRepositoryImpl scheduleRepository;
+    private final MemberRepository memberRepository;
 
-    public ScheduleValidation(ScheduleRepositoryImpl scheduleRepository) {
+    public ScheduleValidation(ScheduleRepositoryImpl scheduleRepository, MemberRepository memberRepository) {
         this.scheduleRepository = scheduleRepository;
+        this.memberRepository = memberRepository;
     }
 
     // 비밀번호 검증 메서드
@@ -68,8 +73,23 @@ public class ScheduleValidation {
                 .build();
     }
 
+    //삭제 검증
     public void deleteByScheduleById(ScheduleDto scheduleDto, Schedule schedule) {
         validatePassword(scheduleDto, schedule);
         validateId(scheduleDto, schedule);
+    }
+
+    //회원 아이디와 스케줄 아이디 검증
+    public void validationOfFindScheduleByMemberId(ScheduleDto scheduleDto, MemberDto memberDto) {
+        Member findMember = memberRepository.findById(memberDto.getId());
+        Schedule findSchedule = scheduleRepository.findScheduleById(scheduleDto.getId());
+
+        if (findMember == null) {
+            throw new IllegalArgumentException("해당 사용자가 없습니다.");
+        }
+
+        if (findSchedule == null) {
+            throw new IllegalArgumentException("해당 스케줄이 없습니다.");
+        }
     }
 }
