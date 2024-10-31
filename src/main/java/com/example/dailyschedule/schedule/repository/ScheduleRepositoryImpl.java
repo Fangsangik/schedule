@@ -41,7 +41,8 @@ public class ScheduleRepositoryImpl {
                 .password(schedule.getPassword())
                 .description(schedule.getDescription())
                 .createdAt(schedule.getCreatedAt())  // DTO에서 설정된 createdAt 사용
-                .updatedAt(schedule.getUpdatedAt())  // DTO에서 설정된 updatedAt 사용
+                .updatedAt(schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now())  // DTO에서 설정된 updatedAt 사용 없으면 현재 시간 반영
+                .deletedAt(schedule.getDeletedAt())
                 .build();
     }
 
