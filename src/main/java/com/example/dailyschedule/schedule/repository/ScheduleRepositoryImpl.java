@@ -29,7 +29,7 @@ public class ScheduleRepositoryImpl {
                 schedule.getCreatedAt(),
                 schedule.getPassword(),
                 schedule.getDescription(),
-                schedule.getUpdatedAt(),
+                schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now(),
                 schedule.getDeletedAt()
         );
         //최근 추가된 ID 조회
