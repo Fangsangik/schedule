@@ -1,11 +1,18 @@
 package com.example.dailyschedule.schedule.repository;
 
 import com.example.dailyschedule.member.entity.Member;
+import com.example.dailyschedule.member.repository.MemberRepository;
+import com.example.dailyschedule.schedule.dto.ScheduleDto;
+import com.example.dailyschedule.schedule.dto.SearchDto;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,16 +21,18 @@ import java.util.List;
 public class ScheduleRepositoryImpl {
 
     private final JdbcTemplate jdbcTemplate;
+    private final MemberRepository memberRepository;
 
-    public ScheduleRepositoryImpl(JdbcTemplate jdbcTemplate) {
+    public ScheduleRepositoryImpl(JdbcTemplate jdbcTemplate, MemberRepository memberRepository) {
         this.jdbcTemplate = jdbcTemplate;
+        this.memberRepository = memberRepository;
     }
 
 
-    public Schedule createSchedule(Schedule schedule) {
+    // userId 제거
+    public Schedule createSchedule(Schedule schedule, Member member) {
 
-
-        String sql = "INSERT INTO schedule (author, title, created_at, password, description, updated_at, deleted_at, member_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO schedule (author, title, created_at, password, description, updated_at, deleted_at, member_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         jdbcTemplate.update(sql,
                 schedule.getAuthor(),
@@ -33,24 +42,26 @@ public class ScheduleRepositoryImpl {
                 schedule.getDescription(),
                 schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now(),
                 schedule.getDeletedAt(),
-                schedule.getMember().getId()
+                member.getId() // Member 객체에서 member_id를 가져옴
         );
-        //최근 추가된 ID 조회
+
+        // 최근 추가된 ID 조회
         Long generatedId = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
+
         return Schedule.builder()
                 .id(generatedId)
                 .author(schedule.getAuthor())
                 .title(schedule.getTitle())
                 .password(schedule.getPassword())
                 .description(schedule.getDescription())
-                .createdAt(schedule.getCreatedAt())  // DTO에서 설정된 createdAt 사용
-                .updatedAt(schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now())  // DTO에서 설정된 updatedAt 사용 없으면 현재 시간 반영
+                .createdAt(schedule.getCreatedAt())
+                .updatedAt(schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now())
                 .deletedAt(schedule.getDeletedAt())
-                .member(schedule.getMember())
+                .member(member) // Member 객체 설정
                 .build();
     }
 
-    public Schedule updateSchedule(Schedule schedule) {
+    public Schedule updateSchedule(Member member, Schedule schedule) {
         if (schedule.getId() == null) {
             throw new IllegalArgumentException("해당 id가 존재하지 않습니다.");
         }
@@ -65,7 +76,7 @@ public class ScheduleRepositoryImpl {
                 schedule.getPassword(),
                 schedule.getCreatedAt(),
                 schedule.getDeletedAt(),
-                schedule.getMember().getId(),
+                member.getId(),
                 schedule.getId());  // 마지막 파라미터로 id 추가
         if (updatedRows == 0) {
             throw new IllegalArgumentException("업데이트 실패");
@@ -98,11 +109,12 @@ public class ScheduleRepositoryImpl {
 
 
     //test용
+    @Transactional
     public void deleteAll() {
         String sql = "delete from schedule";
 
         int deleteAll = jdbcTemplate.update(sql);
-        if (deleteAll == 0) {
+        if (deleteAll < 0) {
             throw new IllegalArgumentException("전체 삭제에 실패했습니다.");
         }
     }
@@ -120,9 +132,16 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    public List<Schedule> findAllOrderByUpdatedDateDesc() {
-        String sql = "SELECT * FROM schedule ORDER BY updated_at DESC";
-        return jdbcTemplate.query(sql, scheduleRowMapper());
+    public Page<Schedule> findAllOrderByUpdatedDateDesc(SearchDto searchDto) {
+        String sql = "SELECT * FROM schedule ORDER BY updated_at DESC LIMIT ? OFFSET ?";
+
+        int offset = searchDto.getOffset();
+
+        List<Schedule> schedules = jdbcTemplate.query(sql, new Object[]{searchDto.getRecordSize(), offset}, scheduleRowMapper());
+
+
+
+        return new PageImpl<>(schedules, PageRequest.of(searchDto.getPage(), searchDto.getRecordSize()), schedules.size());
     }
 
 
@@ -137,14 +156,18 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    public List<Schedule> findSchedulesByMemberId(Long memberId) {
+    public Page<Schedule> findSchedulesByMemberId(SearchDto searchDto, Long memberId) {
         if (memberId == null) {
             throw new IllegalArgumentException("해당 회원 아이디가 존재하지 않습니다.");
         }
 
-        String sql = "select * from schedule s left join member m on s.member_id = m.id where m.id = ?";
+        int offset = searchDto.getOffset();
 
-        return jdbcTemplate.query(sql, new Object[]{memberId}, scheduleRowMapper());
+        String sql = "select * from schedule s left join member m on s.member_id = m.id where m.id = ? LIMIT ? OFFSET ?";
+
+        List<Schedule> schedules = jdbcTemplate.query(sql, new Object[]{searchDto.getRecordSize(), offset, memberId}, scheduleRowMapper());
+
+        return new PageImpl<>(schedules, PageRequest.of(searchDto.getPage(), searchDto.getRecordSize()), schedules.size());
     }
 
     public Schedule findSingleScheduleByMemberId(Long memberId) {
