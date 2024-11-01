@@ -104,15 +104,14 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    public Schedule findByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author) {
+    public List<Schedule> findSchedulesByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author) {
         if (updatedAt == null && author == null) {
             throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
         }
 
-        String sql = "SELECT * FROM schedule WHERE (updated_at = ? OR ? IS NULL) or (author = ? OR ? IS NULL) ORDER BY updated_at DESC";
+        String sql = "SELECT * FROM schedule WHERE (updated_at = ? OR ? IS NULL) OR (author = ? OR ? IS NULL) ORDER BY updated_at DESC";
 
-        return jdbcTemplate.queryForObject(sql, new Object[]{updatedAt, updatedAt
-                , author, author}, scheduleRowMapper());
+        return jdbcTemplate.query(sql, new Object[]{updatedAt, updatedAt, author, author}, scheduleRowMapper());
     }
 
 
@@ -122,14 +121,15 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    public Schedule findByDate(LocalDateTime date) {
+    public List<Schedule> findByDate(LocalDateTime date) {
         if (date == null) {
             throw new IllegalArgumentException("해당 날짜가 없습니다.");
         }
-        String sql = "SELECT * FROM schedule " +
-                "WHERE created_at = ? OR updated_at = ? OR deleted_at = ?";
 
-        return jdbcTemplate.queryForObject(sql, new Object[]{date, date, date}, scheduleRowMapper());
+        String sql = "SELECT * FROM schedule WHERE created_at = ? OR updated_at = ? OR deleted_at = ?";
+
+        // query 메서드를 사용하여 다수의 결과를 리스트로 반환
+        return jdbcTemplate.query(sql, new Object[]{date, date, date}, scheduleRowMapper());
     }
 
 
