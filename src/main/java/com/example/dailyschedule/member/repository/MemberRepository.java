@@ -2,6 +2,7 @@ package com.example.dailyschedule.member.repository;
 
 import com.example.dailyschedule.member.entity.Member;
 import com.example.dailyschedule.schedule.entity.Schedule;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -20,8 +21,7 @@ public class MemberRepository {
 
     public Member createMember(Member member) {
 
-        String sql = "insert into (userId, password, name, email, updated_at) from member" +
-                "values(?,?,?,?,?)";
+        String sql = "INSERT INTO member (user_id, password, name, email, updated_at) VALUES (?, ?, ?, ?, ?)";
 
          jdbcTemplate.update(sql,
                 member.getUserId(),
@@ -30,6 +30,7 @@ public class MemberRepository {
                 member.getEmail(),
                 member.getUpdatedAt());
 
+         //jdbcTemplate.queryForObject를 사용하여 마지막에 삽입된 레코드의 ID를 Long 타입으로 가져오는 것
          Long generatedId = jdbcTemplate.queryForObject("select LAST_INSERT_ID()", Long.class);
          return Member.builder()
                  .id(generatedId)
@@ -42,13 +43,27 @@ public class MemberRepository {
     }
 
     public Member findByUserId(String userId) {
-        if (userId == null) {
-            throw new IllegalArgumentException("해당 아이디를 찾을 수 없습니다.");
+        //memberRepo 쪽으로 빼서 사용
+        String selectMemberSql = "SELECT * FROM member WHERE user_id = ?";
+        Member member;
+        try {
+
+            //검증 단계에서 다 가져올 필요 없음
+            member = jdbcTemplate.queryForObject(selectMemberSql, new Object[]{userId}, (rs, rowNum) ->
+                    Member.builder()
+                            .id(rs.getLong("id"))
+                            .userId(rs.getString("user_id"))
+                            .password(rs.getString("password"))
+                            .name(rs.getString("name"))
+                            .email(rs.getString("email"))
+                            .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
+                            .build()
+            );
+
+        } catch (EmptyResultDataAccessException e) {
+            throw new IllegalArgumentException("해당 사용자 이름을 찾을 수 없습니다: " + userId);
         }
-
-        String sql = "select * from member where user_id = ?";
-
-        return jdbcTemplate.queryForObject(sql, new Object[]{userId}, memberRowMapper());
+        return member;
     }
 
     public List<Member> findAll() {
@@ -95,6 +110,14 @@ public class MemberRepository {
         }
     }
 
+    public void deleteMemberAndSchedule() {
+        String deleteMemberSql = "delete from member";
+        jdbcTemplate.update(deleteMemberSql);
+
+        String deleteScheduleSql = "delete from schedule";
+        jdbcTemplate.update(deleteScheduleSql);
+    }
+
     public Member findByName(String name) {
         if (name == null) {
             throw new IllegalArgumentException("이름이 없습니다.");
@@ -102,6 +125,14 @@ public class MemberRepository {
 
         String sql = "select * from member where name = ?";
         return jdbcTemplate.queryForObject(sql, new Object[]{name}, memberRowMapper());
+    }
+
+    public void deleteAll() {
+        String sql = "delete from member";
+        int delete = jdbcTemplate.update(sql);
+        if (delete < 0) {
+            throw new IllegalArgumentException("삭제하는데 실패했습니다.");
+        }
     }
 
     private RowMapper<Member> memberRowMapper () {
