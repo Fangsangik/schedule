@@ -12,7 +12,6 @@ create table schedule (
                           primary key (id)
 );
 
-
 # insert Schedule
 INSERT INTO schedule
     (author, title, created_at, password, description, updated_at, deleted_at)
@@ -55,6 +54,8 @@ select * from schedule
 # 날짜로 찾기
 select * from schedule where updated_at = '2024-11-01-00-03';
 
+#==========================================================================
+
 # 회원 table 생성
 create table member (
     id BIGINT not null primary key,
@@ -65,3 +66,19 @@ create table member (
 );
 
 alter table member change userId user_id varchar(25) not null;
+
+ALTER TABLE member
+ADD COLUMN password VARCHAR(255) NOT NULL;
+desc member;
+desc schedule;
+
+ALTER TABLE schedule
+    ADD CONSTRAINT fk_member
+        FOREIGN KEY (member_id) REFERENCES member(id) ON DELETE CASCADE;
+
+SELECT user_id, COUNT(*)
+FROM member
+GROUP BY user_id
+HAVING COUNT(*) > 1;
+
+ALTER TABLE member ADD CONSTRAINT unique_user_id UNIQUE (user_id);
