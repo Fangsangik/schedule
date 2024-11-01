@@ -1,19 +1,21 @@
 package com.example.dailyschedule.service;
 
-import com.example.dailyschedule.schedule.converter.ScheduleConverter;
+import com.example.dailyschedule.member.converter.MemberConverter;
+import com.example.dailyschedule.member.dto.MemberDto;
+import com.example.dailyschedule.member.entity.Member;
+import com.example.dailyschedule.member.repository.MemberRepository;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
+import com.example.dailyschedule.schedule.dto.SearchDto;
 import com.example.dailyschedule.schedule.repository.ScheduleRepositoryImpl;
 import com.example.dailyschedule.schedule.service.ScheduleServiceImpl;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.Page;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,12 +27,28 @@ class ScheduleServiceImplTest {
     private ScheduleServiceImpl scheduleService;
 
     @Autowired
-    private ScheduleRepositoryImpl scheduleRepository;
+    private MemberRepository memberRepository;
+
+    @Autowired
+    private MemberConverter memberConverter;
 
     private ScheduleDto schedule;
+    private MemberDto memberDto;
 
     @Test
     void create() {
+        memberRepository.deleteMemberAndSchedule();
+
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+
         schedule = ScheduleDto.builder()
                 .id(1L)
                 .title("test title")
@@ -39,9 +57,11 @@ class ScheduleServiceImplTest {
                 .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .password("TestPassword")
+                .memberDto(memberDto)
                 .build();
 
-        ScheduleDto createdSchedule = scheduleService.create(schedule);
+        ScheduleDto createdSchedule = scheduleService.create(memberConverter.toDto(createdMember), schedule);
+
         assertNotNull(createdSchedule);
         assertThat(createdSchedule.getTitle()).isEqualTo(schedule.getTitle());
         assertThat(createdSchedule.getDescription()).isEqualTo(schedule.getDescription());
@@ -53,6 +73,18 @@ class ScheduleServiceImplTest {
     @Test
     @Transactional
     void findById() {
+        memberRepository.deleteMemberAndSchedule();
+
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+
         schedule = ScheduleDto.builder()
                 .id(1L)
                 .title("test title")
@@ -61,9 +93,10 @@ class ScheduleServiceImplTest {
                 .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .password("TestPassword")
+                .memberDto(memberDto)
                 .build();
 
-        ScheduleDto createdSchedule = scheduleService.create(schedule);
+        ScheduleDto createdSchedule = scheduleService.create(memberConverter.toDto(createdMember), schedule);
         assertNotNull(createdSchedule);
 
         ScheduleDto findId = scheduleService.findById(createdSchedule.getId());
@@ -74,6 +107,17 @@ class ScheduleServiceImplTest {
     @Test
     @Transactional
     void update() {
+        memberRepository.deleteMemberAndSchedule();
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+
         schedule = ScheduleDto.builder()
                 .id(1L)
                 .title("test title")
@@ -82,9 +126,10 @@ class ScheduleServiceImplTest {
                 .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .password("TestPassword")
+                .memberDto(memberDto)
                 .build();
 
-        ScheduleDto createdSchedule = scheduleService.create(schedule);
+        ScheduleDto createdSchedule = scheduleService.create(memberDto, schedule);
         assertNotNull(createdSchedule);
 
         ScheduleDto updatedData = ScheduleDto.builder()
@@ -97,7 +142,7 @@ class ScheduleServiceImplTest {
                 .password("updated password")
                 .build();
 
-        ScheduleDto updatedSchedule = scheduleService.update(updatedData);
+        ScheduleDto updatedSchedule = scheduleService.update(memberConverter.toDto(createdMember), updatedData);
         assertNotNull(updatedSchedule);
         assertThat(updatedSchedule.getTitle()).isEqualTo("updated title");
         assertThat(updatedSchedule.getDescription()).isEqualTo("updated description");
@@ -108,6 +153,18 @@ class ScheduleServiceImplTest {
     @Test
     @Transactional
     void deleteById() {
+        memberRepository.deleteMemberAndSchedule();
+
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+
+
         schedule = ScheduleDto.builder()
                 .id(1L)
                 .title("test title")
@@ -116,9 +173,10 @@ class ScheduleServiceImplTest {
                 .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
                 .password("TestPassword")
+                .memberDto(memberDto)
                 .build();
 
-        ScheduleDto createdSchedule = scheduleService.create(schedule);
+        ScheduleDto createdSchedule = scheduleService.create(memberConverter.toDto(createdMember), schedule);
         assertNotNull(createdSchedule);
 
         scheduleService.deleteById(createdSchedule);
@@ -129,8 +187,19 @@ class ScheduleServiceImplTest {
     }
 
     @Test
+    @Transactional
     void findByUpdatedDateDesc() {
-        scheduleRepository.deleteAll();
+        memberRepository.deleteMemberAndSchedule();
+
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+
 
         ScheduleDto schedule1 = ScheduleDto.builder()
                 .title("First Test Title")
@@ -139,6 +208,7 @@ class ScheduleServiceImplTest {
                 .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
                 .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))
                 .password("password1")
+                .memberDto(memberDto)
                 .build();
 
         ScheduleDto schedule2 = ScheduleDto.builder()
@@ -148,22 +218,39 @@ class ScheduleServiceImplTest {
                 .createdAt(LocalDateTime.of(2024, 06, 01, 00, 00))
                 .updatedAt(LocalDateTime.of(2024, 07, 05, 00, 00))
                 .password("password2")
+                .memberDto(memberDto)
                 .build();
 
-        scheduleService.create(schedule1);
-        scheduleService.create(schedule2);
+        scheduleService.create(memberConverter.toDto(createdMember), schedule1);
+        scheduleService.create(memberConverter.toDto(createdMember), schedule2);
 
-        List<ScheduleDto> scheduleDtoList = scheduleService.findByUpdatedDateDesc();
+        SearchDto searchDto = SearchDto.builder()
+                .page(1)
+                .pageSize(10)
+                .recordSize(10)
+                .build();
+
+        Page<ScheduleDto> scheduleDtoList = scheduleService.findByUpdatedDateDesc(searchDto);
         assertFalse(scheduleDtoList.isEmpty());
-        assertThat(scheduleDtoList.size()).isEqualTo(2);
-        assertThat(scheduleDtoList.get(0).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 10, 00, 00));
-        assertThat(scheduleDtoList.get(1).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 05, 00, 00));
+        assertThat(scheduleDtoList.getTotalElements()).isEqualTo(12);
+        assertThat(scheduleDtoList.getContent().get(0).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 7, 10, 0, 0));
+        assertThat(scheduleDtoList.getContent().get(1).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 7, 5, 0, 0));
     }
 
     @Test
     void updatedDateByAuthorAndTitle() {
-        // 기존 데이터 삭제
-        scheduleRepository.deleteAll();
+        memberRepository.deleteMemberAndSchedule();
+
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+
 
         // 첫 번째 일정 생성
         ScheduleDto schedule1 = ScheduleDto.builder()
@@ -173,10 +260,11 @@ class ScheduleServiceImplTest {
                 .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
                 .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))
                 .password("password1")
+                .memberDto(memberDto)
                 .build();
 
         // 일정 생성 및 생성된 일정의 ID 확인
-        ScheduleDto createdSchedule = scheduleService.create(schedule1);
+        ScheduleDto createdSchedule = scheduleService.create(memberConverter.toDto(createdMember), schedule1);
 
         // 업데이트할 제목과 작성자 정보 설정 (생성된 ID 사용)
         ScheduleDto schedule2 = ScheduleDto.builder()
@@ -190,7 +278,7 @@ class ScheduleServiceImplTest {
                 .build();
 
         // 제목과 작성자명 업데이트
-        ScheduleDto updatedSchedule = scheduleService.updateTitleAndAuthor(schedule2);
+        ScheduleDto updatedSchedule = scheduleService.updateTitleAndAuthor(memberConverter.toDto(createdMember), schedule2);
 
         // 업데이트된 제목과 작성자를 검증
         assertThat(updatedSchedule.getTitle()).isEqualTo("Updated Test Title");
@@ -200,7 +288,18 @@ class ScheduleServiceImplTest {
 
     @Test
     void findDateTest() {
-        scheduleRepository.deleteAll();
+        memberRepository.deleteMemberAndSchedule();
+
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+
 
         ScheduleDto schedule1 = ScheduleDto.builder()
                 .title("Original Test Title")
@@ -209,9 +308,10 @@ class ScheduleServiceImplTest {
                 .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
                 .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))
                 .password("password1")
+                .memberDto(memberDto)
                 .build();
 
-        ScheduleDto scheduleDto1 = scheduleService.create(schedule1);
+        ScheduleDto scheduleDto1 = scheduleService.create(memberConverter.toDto(createdMember), schedule1);
 
 
         ScheduleDto createdAtDate = scheduleService.findByDate(scheduleDto1.getCreatedAt());
@@ -222,7 +322,18 @@ class ScheduleServiceImplTest {
 
     @Test
     void findByUpdateDateAndAuthor() {
-        scheduleRepository.deleteAll();
+        memberRepository.deleteMemberAndSchedule();
+
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+
 
         ScheduleDto schedule1 = ScheduleDto.builder()
                 .title("Original Test Title")
@@ -231,9 +342,10 @@ class ScheduleServiceImplTest {
                 .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
                 .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))
                 .password("password1")
+                .memberDto(memberDto)
                 .build();
 
-        ScheduleDto cratedSchedule = scheduleService.create(schedule1);
+        ScheduleDto cratedSchedule = scheduleService.create(memberConverter.toDto(createdMember), schedule1);
         ScheduleDto findSchedule = scheduleService.findByUpdatedDateAndAuthor(schedule1.getUpdatedAt(), cratedSchedule.getAuthor());
         assertThat(findSchedule.getUpdatedAt()).isEqualTo("2024-07-10T00:00");
         assertThat(findSchedule.getTitle()).isEqualTo("Original Test Title");
