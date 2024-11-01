@@ -1,6 +1,7 @@
 package com.example.dailyschedule.schedule.service;
 
 import com.example.dailyschedule.schedule.converter.ScheduleConverter;
+import com.example.dailyschedule.schedule.dto.CombinedScheduleDto;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.example.dailyschedule.schedule.repository.ScheduleRepositoryImpl;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ScheduleServiceImpl {
@@ -18,13 +20,12 @@ public class ScheduleServiceImpl {
     private final ScheduleConverter scheduleConverter;
     private final ScheduleValidation scheduleValidation;
 
-    //생성자 주입
+    // 생성자 주입
     public ScheduleServiceImpl(ScheduleRepositoryImpl scheduleRepositoryImpl, ScheduleConverter scheduleConverter) {
         this.scheduleRepositoryImpl = scheduleRepositoryImpl;
         this.scheduleConverter = scheduleConverter;
         this.scheduleValidation = new ScheduleValidation(scheduleRepositoryImpl);
     }
-
 
     @Transactional
     public ScheduleDto create(ScheduleDto scheduleDto) {
@@ -33,7 +34,6 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(saveSchedule);
     }
 
-
     @Transactional(readOnly = true)
     public ScheduleDto findById(Long id) {
         Schedule existId = scheduleValidation.validateExistId(id);
@@ -41,28 +41,22 @@ public class ScheduleServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    public ScheduleDto findByUpdatedDateAndAuthor (LocalDateTime updatedAt, String author) {
-        Schedule schedule = scheduleRepositoryImpl.findByUpdatedDateAndAuthor(updatedAt, author);
-        scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author, schedule);
-        return scheduleConverter.toDto(schedule);
+    public List<ScheduleDto> findByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author) {
+        scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author);
+
+        // 모든 결과를 리스트 형태로 반환
+        List<Schedule> schedules = scheduleRepositoryImpl.findSchedulesByUpdatedDateAndAuthor(updatedAt, author);
+        return schedules.stream()
+                .map(scheduleConverter::toDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<ScheduleDto> findByUpdatedDateDesc() {
         List<Schedule> byUpdatedDateByDesc = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc();
-
         List<ScheduleDto> scheduleDtos = new ArrayList<>();
         for (Schedule schedule : byUpdatedDateByDesc) {
-            ScheduleDto scheduleDto = ScheduleDto.builder()
-                    .id(schedule.getId())
-                    .author(schedule.getAuthor())
-                    .title(schedule.getTitle())
-                    .description(schedule.getDescription())
-                    .createdAt(schedule.getCreatedAt())
-                    .updatedAt(schedule.getUpdatedAt())
-                    .deletedAt(schedule.getDeletedAt())
-                    .build();
-            scheduleDtos.add(scheduleDto);
+            scheduleDtos.add(scheduleConverter.toDto(schedule));
         }
         return scheduleDtos;
     }
@@ -74,29 +68,30 @@ public class ScheduleServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    public ScheduleDto findByDate(LocalDateTime date) {
-        Schedule findDate = scheduleRepositoryImpl.findByDate(date);
-
-        if (findDate == null) {
+    public List<ScheduleDto> findByDate(LocalDateTime date) {
+        List<Schedule> findDates = scheduleRepositoryImpl.findByDate(date);
+        if (findDates.isEmpty()) {
             throw new IllegalArgumentException("해당 날짜에 대한 값이 존재하지 않습니다.");
         }
-
-        return scheduleConverter.toDto(findDate);
-    }
-
-    //Lv2
-    @Transactional
-    public ScheduleDto updateTitleAndAuthor(ScheduleDto scheduleDto) {
-        Schedule existingSchedule = scheduleRepositoryImpl.findScheduleById(scheduleDto.getId());
-        Schedule updatedScheduleDto = scheduleValidation.updateTitleAndAuthor(scheduleDto, existingSchedule);
-        scheduleRepositoryImpl.updateSchedule(updatedScheduleDto);
-        return scheduleConverter.toDto(updatedScheduleDto);
+        List<ScheduleDto> scheduleDtoList = new ArrayList<>();
+        for (Schedule findDate : findDates) {
+            scheduleDtoList.add(scheduleConverter.toDto(findDate));
+        }
+        return scheduleDtoList;
     }
 
     @Transactional
-    public void deleteById(ScheduleDto scheduleDto) {
-        Schedule existSchedule = scheduleRepositoryImpl.findScheduleById(scheduleDto.getId());
-        scheduleValidation.deleteByScheduleById(scheduleDto, existSchedule);
+    public ScheduleDto updateTitleAndAuthor(Long id, CombinedScheduleDto combinedScheduleDto) {
+        Schedule existingSchedule = scheduleRepositoryImpl.findScheduleById(id);
+        Schedule updatedSchedule = scheduleValidation.validateAndPrepareUpdatedSchedule(combinedScheduleDto, existingSchedule);
+        scheduleRepositoryImpl.updateSchedule(updatedSchedule);
+        return scheduleConverter.toDto(updatedSchedule);
+    }
+
+    @Transactional
+    public void deleteById(Long id, String password) {
+        Schedule existSchedule = scheduleRepositoryImpl.findScheduleById(id);
+        scheduleValidation.deleteByScheduleById(id, password, existSchedule);
         scheduleRepositoryImpl.deleteScheduleById(existSchedule.getId());
     }
 }
