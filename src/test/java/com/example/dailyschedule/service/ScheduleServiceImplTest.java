@@ -1,14 +1,12 @@
 package com.example.dailyschedule.service;
 
-import com.example.dailyschedule.schedule.converter.ScheduleConverter;
+import com.example.dailyschedule.schedule.dto.CombinedScheduleDto;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.example.dailyschedule.schedule.repository.ScheduleRepositoryImpl;
 import com.example.dailyschedule.schedule.service.ScheduleServiceImpl;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -30,6 +28,7 @@ class ScheduleServiceImplTest {
     private ScheduleDto schedule;
 
     @Test
+    @Transactional
     void create() {
         schedule = ScheduleDto.builder()
                 .id(1L)
@@ -121,7 +120,7 @@ class ScheduleServiceImplTest {
         ScheduleDto createdSchedule = scheduleService.create(schedule);
         assertNotNull(createdSchedule);
 
-        scheduleService.deleteById(createdSchedule);
+        scheduleService.deleteById(createdSchedule.getId(), "TestPassword");
 
         assertThrows(IllegalArgumentException.class, () -> {
             scheduleService.findById(createdSchedule.getId());
@@ -129,10 +128,12 @@ class ScheduleServiceImplTest {
     }
 
     @Test
+    @Transactional
     void findByUpdatedDateDesc() {
         scheduleRepository.deleteAll();
 
         ScheduleDto schedule1 = ScheduleDto.builder()
+                .id(1L)
                 .title("First Test Title")
                 .description("First Test Description")
                 .author("Author1")
@@ -161,12 +162,14 @@ class ScheduleServiceImplTest {
     }
 
     @Test
+    @Transactional
     void updatedDateByAuthorAndTitle() {
         // 기존 데이터 삭제
         scheduleRepository.deleteAll();
 
         // 첫 번째 일정 생성
         ScheduleDto schedule1 = ScheduleDto.builder()
+                .id(1L)
                 .title("Original Test Title")
                 .description("Original Test Description")
                 .author("Original Author")
@@ -178,19 +181,18 @@ class ScheduleServiceImplTest {
         // 일정 생성 및 생성된 일정의 ID 확인
         ScheduleDto createdSchedule = scheduleService.create(schedule1);
 
-        // 업데이트할 제목과 작성자 정보 설정 (생성된 ID 사용)
-        ScheduleDto schedule2 = ScheduleDto.builder()
-                .id(createdSchedule.getId())               // 생성된 일정의 ID를 사용
+        // 업데이트할 제목과 작성자 정보 설정
+        CombinedScheduleDto updatedScheduleDto = CombinedScheduleDto.builder()
+                .id(createdSchedule.getId())
+                .updatedAt(createdSchedule.getUpdatedAt())
                 .title("Updated Test Title")               // 새로운 제목
-                .description(schedule1.getDescription())   // 기존 설명 유지
                 .author("Updated Author")                  // 새로운 작성자
-                .createdAt(schedule1.getCreatedAt())
-                .updatedAt(LocalDateTime.of(2024, 07, 15, 00, 00))  // 새로운 업데이트 날짜
-                .password("password1")                     // 동일한 비밀번호
+                .password(createdSchedule.getPassword())
                 .build();
 
+
         // 제목과 작성자명 업데이트
-        ScheduleDto updatedSchedule = scheduleService.updateTitleAndAuthor(schedule2);
+        ScheduleDto updatedSchedule = scheduleService.updateTitleAndAuthor(createdSchedule.getId(), updatedScheduleDto);
 
         // 업데이트된 제목과 작성자를 검증
         assertThat(updatedSchedule.getTitle()).isEqualTo("Updated Test Title");
@@ -199,6 +201,7 @@ class ScheduleServiceImplTest {
 
 
     @Test
+    @Transactional
     void findDateTest() {
         scheduleRepository.deleteAll();
 
@@ -206,21 +209,24 @@ class ScheduleServiceImplTest {
                 .title("Original Test Title")
                 .description("Original Test Description")
                 .author("Original Author")
-                .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
-                .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))
+                .createdAt(LocalDateTime.of(2024, 7, 1, 0, 0))
+                .updatedAt(LocalDateTime.of(2024, 7, 10, 0, 0))
                 .password("password1")
                 .build();
 
         ScheduleDto scheduleDto1 = scheduleService.create(schedule1);
+        List<ScheduleDto> createdAtDate = scheduleService.findByDate(scheduleDto1.getCreatedAt());
 
-
-        ScheduleDto createdAtDate = scheduleService.findByDate(scheduleDto1.getCreatedAt());
+        // 리스트가 비어 있지 않은지 확인
         assertNotNull(createdAtDate);
-        assertThat(createdAtDate.getCreatedAt()).isEqualTo("2024-07-01T00:00");
+        assertFalse(createdAtDate.isEmpty());
 
+        // 리스트의 첫 번째 ScheduleDto의 createdAt 값이 예상 값과 일치하는지 확인
+        assertThat(createdAtDate.get(0).getCreatedAt()).isEqualTo(LocalDateTime.of(2024, 7, 1, 0, 0));
     }
 
     @Test
+    @Transactional
     void findByUpdateDateAndAuthor() {
         scheduleRepository.deleteAll();
 
@@ -234,8 +240,8 @@ class ScheduleServiceImplTest {
                 .build();
 
         ScheduleDto cratedSchedule = scheduleService.create(schedule1);
-        ScheduleDto findSchedule = scheduleService.findByUpdatedDateAndAuthor(schedule1.getUpdatedAt(), cratedSchedule.getAuthor());
-        assertThat(findSchedule.getUpdatedAt()).isEqualTo("2024-07-10T00:00");
-        assertThat(findSchedule.getTitle()).isEqualTo("Original Test Title");
+        List<ScheduleDto> findSchedule = scheduleService.findByUpdatedDateAndAuthor(schedule1.getUpdatedAt(), cratedSchedule.getAuthor());
+        assertThat(findSchedule.get(0).getUpdatedAt()).isEqualTo("2024-07-10T00:00");
+        assertThat(findSchedule.get(0).getTitle()).isEqualTo("Original Test Title");
     }
 }
