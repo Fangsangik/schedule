@@ -1,7 +1,6 @@
 package com.example.dailyschedule.schedule.entity;
 
 import com.example.dailyschedule.member.entity.Member;
-import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
