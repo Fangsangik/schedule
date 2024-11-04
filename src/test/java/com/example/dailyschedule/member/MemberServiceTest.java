@@ -182,7 +182,7 @@ class MemberServiceTest {
 
         // 멤버 생성
         MemberDto createdMember1 = memberService.createMember(memberDto1);
-        MemberDto deleteMember = memberService.deleteMember(createdMember1.getId(), createdMember1);
+        MemberDto deleteMember = memberService.deleteMember(createdMember1.getId(), createdMember1.getPassword());
         // 삭제된 멤버가 더 이상 존재하지 않음을 확인
         assertThat(deleteMember).isNotNull();
         assertThat(memberRepository.findById(createdMember1.getId())).isNull(); // 존재하지 않아야 함
