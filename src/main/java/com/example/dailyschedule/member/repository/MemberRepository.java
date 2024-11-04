@@ -1,7 +1,7 @@
 package com.example.dailyschedule.member.repository;
 
 import com.example.dailyschedule.member.entity.Member;
-import com.example.dailyschedule.schedule.entity.Schedule;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -20,36 +20,45 @@ public class MemberRepository {
 
     public Member createMember(Member member) {
 
-        String sql = "insert into (userId, password, name, email, updated_at) from member" +
-                "values(?,?,?,?,?)";
+        String sql = "INSERT INTO member (user_id, password, name, email, updated_at) VALUES (?, ?, ?, ?, ?)";
 
-         jdbcTemplate.update(sql,
+        jdbcTemplate.update(sql,
                 member.getUserId(),
                 member.getPassword(),
                 member.getName(),
                 member.getEmail(),
                 member.getUpdatedAt());
 
-         Long generatedId = jdbcTemplate.queryForObject("select LAST_INSERT_ID()", Long.class);
-         return Member.builder()
-                 .id(generatedId)
-                 .userId(member.getUserId())
-                 .password(member.getPassword())
-                 .name(member.getName())
-                 .email(member.getEmail())
-                 .updatedAt(member.getUpdatedAt())
-                 .build();
+        //jdbcTemplate.queryForObject를 사용하여 마지막에 삽입된 레코드의 ID를 Long 타입으로 가져오는 것
+        Long generatedId = jdbcTemplate.queryForObject("select LAST_INSERT_ID()", Long.class);
+        return Member.builder()
+                .id(generatedId)
+                .userId(member.getUserId())
+                .password(member.getPassword())
+                .name(member.getName())
+                .email(member.getEmail())
+                .updatedAt(member.getUpdatedAt())
+                .build();
     }
 
     public Member findByUserId(String userId) {
-        if (userId == null) {
-            throw new IllegalArgumentException("해당 아이디를 찾을 수 없습니다.");
+        String selectMemberSql = "SELECT * FROM member WHERE user_id = ?";
+        try {
+            return jdbcTemplate.queryForObject(selectMemberSql, new Object[]{userId}, (rs, rowNum) ->
+                    Member.builder()
+                            .id(rs.getLong("id"))
+                            .userId(rs.getString("user_id"))
+                            .password(rs.getString("password"))
+                            .name(rs.getString("name"))
+                            .email(rs.getString("email"))
+                            .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
+                            .build()
+            );
+        } catch (EmptyResultDataAccessException e) {
+            return null; // 사용자가 없으면 null 반환
         }
-
-        String sql = "select * from member where user_id = ?";
-
-        return jdbcTemplate.queryForObject(sql, new Object[]{userId}, memberRowMapper());
     }
+
 
     public List<Member> findAll() {
         String sql = "select * from member";
@@ -62,19 +71,24 @@ public class MemberRepository {
         }
 
         String sql = "select * from member where id = ?";
-        return jdbcTemplate.queryForObject(sql, new Object[]{id}, memberRowMapper());
+
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{id}, memberRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            return null; // 또는 Optional.empty()로 반환하여 예외 처리
+        }
     }
 
     public Member updateMember(Member member) {
-        String sql = "update member set user_Id = ? password = ?, name = ?, email = ?, updated_at = ? where id = ?";
+        String sql = "update member set user_Id = ?, password = ?, name = ?, email = ?, updated_at = ? where id = ?";
 
         int updateRows = jdbcTemplate.update(sql,
                 member.getUserId(),
-                member.getEmail(),
                 member.getPassword(),
                 member.getName(),
-                member.getName(),
-                member.getUpdatedAt());
+                member.getEmail(),
+                member.getUpdatedAt(),
+                member.getId());
 
         if (updateRows == 0) {
             throw new IllegalArgumentException("회원 정보를 update 하는데 실패했습니다.");
@@ -106,6 +120,8 @@ public class MemberRepository {
 
     private RowMapper<Member> memberRowMapper () {
         return (rs, rowNum) -> Member.builder()
+                .id(rs.getLong("id"))
+                .name(rs.getString("name"))
                 .userId(rs.getString("user_id"))
                 .email(rs.getString("email"))
                 .password(rs.getString("password"))
