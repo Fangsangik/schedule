@@ -19,11 +19,11 @@ public class Schedule {
     private String author; //작성자
     private String password; //비말번호
     private String description; //상세 내용
-    @JsonFormat(pattern = "yyyy:MM:dd:HH:mm")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt; //생성 날짜
-    @JsonFormat(pattern = "yyyy:MM:dd:HH:mm")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt; //수정 날짜
-    @JsonFormat(pattern = "yyyy:MM:dd:HH:mm")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime deletedAt; //삭제 날짜
     private Member member;
 }
