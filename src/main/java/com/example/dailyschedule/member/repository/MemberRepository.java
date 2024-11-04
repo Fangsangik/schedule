@@ -1,5 +1,7 @@
 package com.example.dailyschedule.member.repository;
 
+import com.example.dailyschedule.error.CustomException;
+import com.example.dailyschedule.error.type.ErrorCode;
 import com.example.dailyschedule.member.entity.Member;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -9,6 +11,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static com.example.dailyschedule.error.type.ErrorCode.*;
 
 @Repository
 public class MemberRepository {
@@ -23,33 +27,29 @@ public class MemberRepository {
 
         String sql = "INSERT INTO member (user_id, password, name, email, updated_at) VALUES (?, ?, ?, ?, ?)";
 
-         jdbcTemplate.update(sql,
+        jdbcTemplate.update(sql,
                 member.getUserId(),
                 member.getPassword(),
                 member.getName(),
                 member.getEmail(),
                 member.getUpdatedAt());
 
-         //jdbcTemplate.queryForObject를 사용하여 마지막에 삽입된 레코드의 ID를 Long 타입으로 가져오는 것
-         Long generatedId = jdbcTemplate.queryForObject("select LAST_INSERT_ID()", Long.class);
-         return Member.builder()
-                 .id(generatedId)
-                 .userId(member.getUserId())
-                 .password(member.getPassword())
-                 .name(member.getName())
-                 .email(member.getEmail())
-                 .updatedAt(member.getUpdatedAt())
-                 .build();
+        //jdbcTemplate.queryForObject를 사용하여 마지막에 삽입된 레코드의 ID를 Long 타입으로 가져오는 것
+        Long generatedId = jdbcTemplate.queryForObject("select LAST_INSERT_ID()", Long.class);
+        return Member.builder()
+                .id(generatedId)
+                .userId(member.getUserId())
+                .password(member.getPassword())
+                .name(member.getName())
+                .email(member.getEmail())
+                .updatedAt(member.getUpdatedAt())
+                .build();
     }
 
     public Member findByUserId(String userId) {
-        //memberRepo 쪽으로 빼서 사용
         String selectMemberSql = "SELECT * FROM member WHERE user_id = ?";
-        Member member;
         try {
-
-            //검증 단계에서 다 가져올 필요 없음
-            member = jdbcTemplate.queryForObject(selectMemberSql, new Object[]{userId}, (rs, rowNum) ->
+            return jdbcTemplate.queryForObject(selectMemberSql, new Object[]{userId}, (rs, rowNum) ->
                     Member.builder()
                             .id(rs.getLong("id"))
                             .userId(rs.getString("user_id"))
@@ -59,12 +59,11 @@ public class MemberRepository {
                             .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
                             .build()
             );
-
         } catch (EmptyResultDataAccessException e) {
-            throw new IllegalArgumentException("해당 사용자 이름을 찾을 수 없습니다: " + userId);
+            return null; // 사용자가 없으면 null 반환
         }
-        return member;
     }
+
 
     public List<Member> findAll() {
         String sql = "select * from member";
@@ -73,23 +72,28 @@ public class MemberRepository {
 
     public Member findById(Long id) {
         if (id == null) {
-            throw new IllegalArgumentException("해당 id 값이 없습니다.");
+            throw new CustomException(ID_NOT_FOUND);
         }
 
         String sql = "select * from member where id = ?";
-        return jdbcTemplate.queryForObject(sql, new Object[]{id}, memberRowMapper());
+
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{id}, memberRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            return null; // 또는 Optional.empty()로 반환하여 예외 처리
+        }
     }
 
     public Member updateMember(Member member) {
-        String sql = "update member set user_Id = ? password = ?, name = ?, email = ?, updated_at = ? where id = ?";
+        String sql = "update member set user_Id = ?, password = ?, name = ?, email = ?, updated_at = ? where id = ?";
 
         int updateRows = jdbcTemplate.update(sql,
                 member.getUserId(),
-                member.getEmail(),
                 member.getPassword(),
                 member.getName(),
-                member.getName(),
-                member.getUpdatedAt());
+                member.getEmail(),
+                member.getUpdatedAt(),
+                member.getId());
 
         if (updateRows == 0) {
             throw new IllegalArgumentException("회원 정보를 update 하는데 실패했습니다.");
@@ -100,47 +104,58 @@ public class MemberRepository {
 
     public void deleteMember(Long id) {
         if (id == null) {
-            throw new IllegalArgumentException("삭제하고자 하는 Id가 없습니다.");
+            throw new CustomException(ID_NOT_FOUND);
         }
 
         String sql = "delete from member where id = ?";
         int delete = jdbcTemplate.update(sql, id);
         if (delete == 0) {
-            throw new IllegalArgumentException("삭제에 실패했습니다.");
+            throw new CustomException(DELETE_FAILED);
         }
-    }
-
-    public void deleteMemberAndSchedule() {
-        String deleteMemberSql = "delete from member";
-        jdbcTemplate.update(deleteMemberSql);
-
-        String deleteScheduleSql = "delete from schedule";
-        jdbcTemplate.update(deleteScheduleSql);
     }
 
     public Member findByName(String name) {
         if (name == null) {
-            throw new IllegalArgumentException("이름이 없습니다.");
+            throw new CustomException(NOT_FOUND);
         }
 
         String sql = "select * from member where name = ?";
         return jdbcTemplate.queryForObject(sql, new Object[]{name}, memberRowMapper());
     }
 
-    public void deleteAll() {
-        String sql = "delete from member";
-        int delete = jdbcTemplate.update(sql);
-        if (delete < 0) {
-            throw new IllegalArgumentException("삭제하는데 실패했습니다.");
-        }
-    }
-
     private RowMapper<Member> memberRowMapper () {
         return (rs, rowNum) -> Member.builder()
+                .id(rs.getLong("id"))
+                .name(rs.getString("name"))
                 .userId(rs.getString("user_id"))
                 .email(rs.getString("email"))
                 .password(rs.getString("password"))
                 .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
                 .build();
+    }
+
+    public void deleteMember() {
+        String memberSql = "delete from member";
+        int memberDeletedCount = jdbcTemplate.update(memberSql);
+
+        if (memberDeletedCount == 0) {
+            throw new CustomException(DELETE_FAILED);
+
+        }
+    }
+
+    public void deleteMemberAndSchedule() {
+
+        String memberSql = "delete from member";
+        String scheduleSql = "delete from schedule";
+
+        // 각 삭제 작업에 대해 영향을 받은 행 수 확인
+        int memberDeletedCount = jdbcTemplate.update(memberSql);
+        int scheduleDeletedCount = jdbcTemplate.update(scheduleSql);
+
+        // 삭제된 행이 없으면 예외 발생
+        if (memberDeletedCount == 0 && scheduleDeletedCount == 0) {
+            throw new IllegalArgumentException("삭제할 데이터가 없습니다.");
+        }
     }
 }
