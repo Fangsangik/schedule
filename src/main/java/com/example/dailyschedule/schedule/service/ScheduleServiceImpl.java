@@ -1,25 +1,25 @@
 package com.example.dailyschedule.schedule.service;
 
+import com.example.dailyschedule.error.CustomException;
+import com.example.dailyschedule.error.type.ErrorCode;
 import com.example.dailyschedule.member.converter.MemberConverter;
 import com.example.dailyschedule.member.dto.MemberDto;
 import com.example.dailyschedule.member.entity.Member;
 import com.example.dailyschedule.member.repository.MemberRepository;
 import com.example.dailyschedule.member.service.MemberService;
 import com.example.dailyschedule.schedule.converter.ScheduleConverter;
+import com.example.dailyschedule.schedule.dto.CombinedScheduleDto;
 import com.example.dailyschedule.schedule.dto.SearchDto;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.example.dailyschedule.schedule.repository.ScheduleRepositoryImpl;
 import com.example.dailyschedule.schedule.validation.ScheduleValidation;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+
 
 @Service
 public class ScheduleServiceImpl {
@@ -27,8 +27,8 @@ public class ScheduleServiceImpl {
     private final ScheduleRepositoryImpl scheduleRepositoryImpl;
     private final ScheduleConverter scheduleConverter;
     private final ScheduleValidation scheduleValidation;
-    private final MemberConverter memberConverter;
     private final MemberService memberService;
+    private final MemberConverter memberConverter;
 
     //생성자 주입
     public ScheduleServiceImpl(ScheduleRepositoryImpl scheduleRepositoryImpl, ScheduleConverter scheduleConverter, MemberRepository memberRepository, MemberConverter memberConverter, MemberService memberService) {
@@ -38,7 +38,6 @@ public class ScheduleServiceImpl {
         this.scheduleValidation = new ScheduleValidation(scheduleRepositoryImpl, memberRepository);
         this.memberConverter = memberConverter;
     }
-
 
     @Transactional
     public ScheduleDto create(MemberDto memberDto, ScheduleDto scheduleDto) {
@@ -55,39 +54,6 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(saveSchedule);
     }
 
-    @Transactional(readOnly = true)
-    public ScheduleDto findById(Long id) {
-        Schedule existId = scheduleValidation.validateExistId(id);
-        return scheduleConverter.toDto(existId);
-    }
-
-    @Transactional(readOnly = true)
-    public ScheduleDto findByUpdatedDateAndAuthor (LocalDateTime updatedAt, String author) {
-        Schedule schedule = scheduleRepositoryImpl.findByUpdatedDateAndAuthor(updatedAt, author);
-        scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author, schedule);
-        return scheduleConverter.toDto(schedule);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<ScheduleDto> findByUpdatedDateDesc(SearchDto searchDto) {
-        Page<Schedule> byUpdatedDateByDesc = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc(searchDto);
-
-        List<ScheduleDto> scheduleDtos = new ArrayList<>();
-        for (Schedule schedule : byUpdatedDateByDesc) {
-            ScheduleDto scheduleDto = ScheduleDto.builder()
-                    .id(schedule.getId())
-                    .author(schedule.getAuthor())
-                    .title(schedule.getTitle())
-                    .description(schedule.getDescription())
-                    .createdAt(schedule.getCreatedAt())
-                    .updatedAt(schedule.getUpdatedAt())
-                    .deletedAt(schedule.getDeletedAt())
-                    .build();
-            scheduleDtos.add(scheduleDto);
-        }
-        return new PageImpl<>(scheduleDtos, byUpdatedDateByDesc.getPageable(), byUpdatedDateByDesc.getTotalElements());
-    }
-
     @Transactional
     public ScheduleDto update(MemberDto memberDto, ScheduleDto scheduleDto) {
         Member member = memberConverter.toEntity(memberService.findByUserId(memberDto.getUserId()));
@@ -96,31 +62,63 @@ public class ScheduleServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    public ScheduleDto findByDate(LocalDateTime date) {
-        Schedule findDate = scheduleRepositoryImpl.findByDate(date);
-
-        if (findDate == null) {
-            throw new IllegalArgumentException("해당 날짜에 대한 값이 존재하지 않습니다.");
-        }
-
-        return scheduleConverter.toDto(findDate);
+    public ScheduleDto findById(Long id) {
+        Schedule existId = scheduleValidation.validateExistId(id);
+        return scheduleConverter.toDto(existId);
     }
 
-    @Transactional
-    public void deleteById(ScheduleDto scheduleDto) {
-        Schedule existSchedule = scheduleRepositoryImpl.findScheduleById(scheduleDto.getId());
-        scheduleValidation.deleteByScheduleById(scheduleDto, existSchedule);
-        scheduleRepositoryImpl.deleteScheduleById(existSchedule.getId());
+    @Transactional(readOnly = true)
+    public Page<ScheduleDto> findByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author, SearchDto searchDto) {
+        scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author, searchDto);
+
+        // 모든 결과를 리스트 형태로 반환
+        Page<Schedule> schedules = scheduleRepositoryImpl.findSchedulesByUpdatedDateAndAuthor(updatedAt, author, searchDto);
+        if (schedules == null) {
+            throw new CustomException(ErrorCode.NOT_FOUND);
+        }
+
+        return schedules.map(scheduleConverter::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ScheduleDto> findByUpdatedDateDesc(SearchDto searchDto) {
+        Page<Schedule> byUpdatedDateByDesc = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc(searchDto);
+      // Schedule을 ScheduleDto로 변환 후 Page<ScheduleDto>로 반환
+        return byUpdatedDateByDesc.map(scheduleConverter::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ScheduleDto> findByDate(LocalDateTime date, SearchDto searchDto) {
+        Page<Schedule> findDates = scheduleRepositoryImpl.findByDate(date, searchDto);
+        if (findDates.isEmpty()) {
+            throw new CustomException(ErrorCode.NOT_FOUND);
+        }
+
+        return findDates.map(scheduleConverter::toDto);
     }
 
     //Lv2
     @Transactional
-    public ScheduleDto updateTitleAndAuthor(MemberDto memberDto, ScheduleDto scheduleDto) {
-        Member member = memberConverter.toEntity(memberService.findByUserId(memberDto.getUserId()));
-        Schedule existingSchedule = scheduleRepositoryImpl.findScheduleById(scheduleDto.getId());
-        Schedule updatedScheduleDto = scheduleValidation.updateTitleAndAuthor(scheduleDto, existingSchedule);
-        scheduleRepositoryImpl.updateSchedule(member, updatedScheduleDto);
-        return scheduleConverter.toDto(updatedScheduleDto);
+    public ScheduleDto updateTitleAndAuthor(Long scheduleId, CombinedScheduleDto combinedScheduleDto) {
+        Member member = memberConverter.toEntity(memberService.findByUserId(combinedScheduleDto.getMemberDto().getUserId()));
+        Schedule existingSchedule = scheduleRepositoryImpl.findScheduleById(scheduleId);
+
+        // validateAndPrepareUpdatedSchedule에서 업데이트된 Schedule을 반환받아 저장
+        Schedule updatedSchedule = scheduleValidation.validateAndPrepareUpdatedSchedule(combinedScheduleDto, existingSchedule);
+
+        // 업데이트된 스케줄을 저장소에 반영
+        scheduleRepositoryImpl.updateSchedule(member, updatedSchedule);
+
+        // DTO로 변환하여 반환
+        return scheduleConverter.toDto(updatedSchedule);
+    }
+
+
+    @Transactional
+    public void deleteById(Long id, String password) {
+        Schedule existSchedule = scheduleRepositoryImpl.findScheduleById(id);
+        scheduleValidation.deleteByScheduleById(id, password, existSchedule);
+        scheduleRepositoryImpl.deleteScheduleById(existSchedule.getId());
     }
 
     //Lv3
@@ -132,27 +130,12 @@ public class ScheduleServiceImpl {
                 MemberDto.builder().id(memberId).build()
         );
 
-        Page<Schedule> schedules = scheduleRepositoryImpl.findSchedulesByMemberId(searchDto, memberId);
+        Page<Schedule> schedules = scheduleRepositoryImpl.findSchedulesByMemberId(memberId, searchDto);
         if (schedules.isEmpty()) {
-            throw new IllegalArgumentException("해당 회원의 아이디에 할당된 스케줄이 없습니다.");
+            throw new CustomException(ErrorCode.NOT_FOUND);
         }
 
-        List<ScheduleDto> scheduleDtos = new ArrayList<>();
-        for (Schedule schedule : schedules.getContent()) {
-           ScheduleDto scheduleDto = ScheduleDto.builder()
-                    .id(schedule.getId())
-                    .author(schedule.getAuthor())
-                    .title(schedule.getTitle())
-                    .description(schedule.getDescription())
-                    .createdAt(schedule.getCreatedAt())
-                    .updatedAt(schedule.getUpdatedAt())
-                    .deletedAt(schedule.getDeletedAt())
-                    .password(schedule.getPassword())
-                    .build();
-           scheduleDtos.add(scheduleDto);
-        }
-
-        return new PageImpl<>(scheduleDtos, schedules.getPageable(), schedules.getTotalElements());
+        return schedules.map(scheduleConverter::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -166,10 +149,9 @@ public class ScheduleServiceImpl {
         // 검증이 통과하면 조회 진행
         Schedule schedule = scheduleRepositoryImpl.findSingleScheduleByMemberId(memberId);
         if (schedule == null) {
-            throw new IllegalArgumentException("해당 회원의 아이디에 할당된 스케줄이 없습니다.");
+            throw new CustomException(ErrorCode.NOT_FOUND);
         }
 
         return scheduleConverter.toDto(schedule);
     }
-
 }
