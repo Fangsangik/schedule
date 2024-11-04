@@ -26,7 +26,7 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public MemberDto findById(Long id) {
-        Member memberId = memberValidation.validateExistId(id);
+        Member memberId = memberRepository.findById(id);
         return memberConverter.toDto(memberId);
     }
 
@@ -57,16 +57,25 @@ public class MemberService {
     }
 
     @Transactional
-    public MemberDto updateMember(MemberDto memberDto) {
-        Member existMember = memberValidation.validateExistId(memberDto.getId());
+    public MemberDto updateMember(Long memberId, MemberDto memberDto) {
+        Member existMember = memberValidation.validateExistId(memberId);
         memberValidation.validatePassword(existMember, memberDto);
+
+        existMember = existMember.toBuilder()
+                .userId(memberDto.getUserId())
+                .password(memberDto.getPassword())
+                .email(memberDto.getEmail())
+                .name(memberDto.getName())
+                .updatedAt(memberDto.getUpdatedAt())
+                .build();
+
         Member updateMember = memberRepository.updateMember(existMember);
         return memberConverter.toDto(updateMember);
     }
 
     @Transactional
-    public MemberDto deleteMember(MemberDto memberDto) {
-        Member member = memberValidation.validateExistId(memberDto.getId());
+    public MemberDto deleteMember(Long memberId,MemberDto memberDto) {
+        Member member = memberValidation.validateExistId(memberId);
         memberValidation.validatePassword(member, memberDto);
         memberRepository.deleteMember(member.getId());
         return memberConverter.toDto(member);
