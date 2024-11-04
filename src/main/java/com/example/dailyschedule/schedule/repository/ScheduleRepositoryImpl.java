@@ -1,8 +1,6 @@
 package com.example.dailyschedule.schedule.repository;
 
 import com.example.dailyschedule.member.entity.Member;
-import com.example.dailyschedule.member.repository.MemberRepository;
-import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.example.dailyschedule.schedule.dto.SearchDto;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -12,7 +10,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,11 +18,9 @@ import java.util.List;
 public class ScheduleRepositoryImpl {
 
     private final JdbcTemplate jdbcTemplate;
-    private final MemberRepository memberRepository;
 
-    public ScheduleRepositoryImpl(JdbcTemplate jdbcTemplate, MemberRepository memberRepository) {
+    public ScheduleRepositoryImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.memberRepository = memberRepository;
     }
 
 
@@ -109,65 +104,91 @@ public class ScheduleRepositoryImpl {
 
 
     //test용
-    @Transactional
     public void deleteAll() {
         String sql = "delete from schedule";
 
         int deleteAll = jdbcTemplate.update(sql);
-        if (deleteAll < 0) {
+        if (deleteAll == 0) {
             throw new IllegalArgumentException("전체 삭제에 실패했습니다.");
         }
     }
 
 
-    public Schedule findByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author) {
+    public Page<Schedule> findAllOrderByUpdatedDateDesc(SearchDto searchDto) {
+
+        int limit = searchDto.getLimit();
+        int offset = searchDto.getOffset();
+
+        String sql = "SELECT * FROM schedule ORDER BY updated_at DESC LIMIT ? OFFSET ?";
+
+        List<Schedule> schedules = jdbcTemplate.query(sql, new Object[]{limit, offset}, scheduleRowMapper());
+
+        return new PageImpl<>(schedules, PageRequest.of(offset / limit, limit), schedules.size());
+    }
+
+
+
+
+    public Page<Schedule> findSchedulesByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author, SearchDto searchDto) {
         if (updatedAt == null && author == null) {
             throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
         }
 
-        String sql = "SELECT * FROM schedule WHERE (updated_at = ? OR ? IS NULL) or (author = ? OR ? IS NULL) ORDER BY updated_at DESC";
-
-        return jdbcTemplate.queryForObject(sql, new Object[]{updatedAt, updatedAt
-                , author, author}, scheduleRowMapper());
-    }
-
-
-    public Page<Schedule> findAllOrderByUpdatedDateDesc(SearchDto searchDto) {
-        String sql = "SELECT * FROM schedule ORDER BY updated_at DESC LIMIT ? OFFSET ?";
-
+        int limit = searchDto.getLimit();
         int offset = searchDto.getOffset();
 
-        List<Schedule> schedules = jdbcTemplate.query(sql, new Object[]{searchDto.getRecordSize(), offset}, scheduleRowMapper());
+        String sql = "SELECT * FROM schedule WHERE (updated_at = ? OR ? IS NULL) OR (author = ? OR ? IS NULL) ORDER BY updated_at DESC LIMIT ? OFFSET ?";
 
+        List<Schedule> schedules = jdbcTemplate.query(sql, new Object[]{updatedAt, updatedAt, author, author, limit, offset}, scheduleRowMapper());
 
-
-        return new PageImpl<>(schedules, PageRequest.of(searchDto.getPage(), searchDto.getRecordSize()), schedules.size());
+        return new PageImpl<>(schedules, PageRequest.of(offset/limit, limit), schedules.size());
     }
 
 
-    public Schedule findByDate(LocalDateTime date) {
+    public Page<Schedule> findByDate(LocalDateTime date, SearchDto searchDto) {
         if (date == null) {
             throw new IllegalArgumentException("해당 날짜가 없습니다.");
         }
-        String sql = "SELECT * FROM schedule " +
-                "WHERE created_at = ? OR updated_at = ? OR deleted_at = ?";
 
-        return jdbcTemplate.queryForObject(sql, new Object[]{date, date, date}, scheduleRowMapper());
+        int limit = searchDto.getLimit();
+        int offset = searchDto.getOffset();
+
+        if (limit <= 0) {
+            throw new IllegalArgumentException("limit 값이 0보다 커야 합니다.");
+        }
+        if (offset < 0) {
+            throw new IllegalArgumentException("offset 값이 음수가 될 수 없습니다.");
+        }
+
+        String sql = "SELECT * FROM schedule WHERE created_at = ? OR updated_at = ? OR deleted_at = ? LIMIT ? OFFSET ?";
+
+        List<Schedule> schedules = jdbcTemplate.query(sql, new Object[]{date, date, date, limit, offset}, scheduleRowMapper());
+
+        PageRequest pageRequest = PageRequest.of(offset / limit, limit);
+
+        // query 메서드를 사용하여 다수의 결과를 리스트로 반환
+        return new PageImpl<>(schedules, pageRequest, schedules.size());
     }
 
 
-    public Page<Schedule> findSchedulesByMemberId(SearchDto searchDto, Long memberId) {
+
+    public Page<Schedule> findSchedulesByMemberId(Long memberId, SearchDto searchDto) {
         if (memberId == null) {
             throw new IllegalArgumentException("해당 회원 아이디가 존재하지 않습니다.");
         }
 
+        int limit = searchDto.getLimit();
         int offset = searchDto.getOffset();
 
-        String sql = "select * from schedule s left join member m on s.member_id = m.id where m.id = ? LIMIT ? OFFSET ?";
+       String sql = "SELECT * FROM schedule s LEFT JOIN member m ON s.member_id = m.id WHERE m.id = ? LIMIT ? OFFSET ?";
 
-        List<Schedule> schedules = jdbcTemplate.query(sql, new Object[]{searchDto.getRecordSize(), offset, memberId}, scheduleRowMapper());
+       List<Schedule> schedules = jdbcTemplate.query
+               (sql, new Object[]{memberId, limit, offset}, scheduleRowMapper());
 
-        return new PageImpl<>(schedules, PageRequest.of(searchDto.getPage(), searchDto.getRecordSize()), schedules.size());
+        PageRequest pageRequest = PageRequest.of(offset / limit, limit);
+
+        // query 메서드를 사용하여 다수의 결과를 리스트로 반환
+        return new PageImpl<>(schedules, pageRequest, schedules.size());
     }
 
     public Schedule findSingleScheduleByMemberId(Long memberId) {
