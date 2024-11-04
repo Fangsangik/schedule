@@ -20,10 +20,10 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    public Schedule createSchedule(Schedule schedule) {
+    // userId 제거
+    public Schedule createSchedule(Schedule schedule, Member member) {
 
-
-        String sql = "INSERT INTO schedule (author, title, created_at, password, description, updated_at, deleted_at, member_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO schedule (author, title, created_at, password, description, updated_at, deleted_at, member_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         jdbcTemplate.update(sql,
                 schedule.getAuthor(),
@@ -33,24 +33,26 @@ public class ScheduleRepositoryImpl {
                 schedule.getDescription(),
                 schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now(),
                 schedule.getDeletedAt(),
-                schedule.getMember().getId()
+                member.getId() // Member 객체에서 member_id를 가져옴
         );
-        //최근 추가된 ID 조회
+
+        // 최근 추가된 ID 조회
         Long generatedId = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
+
         return Schedule.builder()
                 .id(generatedId)
                 .author(schedule.getAuthor())
                 .title(schedule.getTitle())
                 .password(schedule.getPassword())
                 .description(schedule.getDescription())
-                .createdAt(schedule.getCreatedAt())  // DTO에서 설정된 createdAt 사용
-                .updatedAt(schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now())  // DTO에서 설정된 updatedAt 사용 없으면 현재 시간 반영
+                .createdAt(schedule.getCreatedAt())
+                .updatedAt(schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now())
                 .deletedAt(schedule.getDeletedAt())
-                .member(schedule.getMember())
+                .member(member) // Member 객체 설정
                 .build();
     }
 
-    public Schedule updateSchedule(Schedule schedule) {
+    public Schedule updateSchedule(Member member, Schedule schedule) {
         if (schedule.getId() == null) {
             throw new IllegalArgumentException("해당 id가 존재하지 않습니다.");
         }
@@ -65,7 +67,7 @@ public class ScheduleRepositoryImpl {
                 schedule.getPassword(),
                 schedule.getCreatedAt(),
                 schedule.getDeletedAt(),
-                schedule.getMember().getId(),
+                member.getId(),
                 schedule.getId());  // 마지막 파라미터로 id 추가
         if (updatedRows == 0) {
             throw new IllegalArgumentException("업데이트 실패");
@@ -105,18 +107,6 @@ public class ScheduleRepositoryImpl {
         if (deleteAll == 0) {
             throw new IllegalArgumentException("전체 삭제에 실패했습니다.");
         }
-    }
-
-
-    public Schedule findByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author) {
-        if (updatedAt == null && author == null) {
-            throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
-        }
-
-        String sql = "SELECT * FROM schedule WHERE (updated_at = ? OR ? IS NULL) or (author = ? OR ? IS NULL) ORDER BY updated_at DESC";
-
-        return jdbcTemplate.queryForObject(sql, new Object[]{updatedAt, updatedAt
-                , author, author}, scheduleRowMapper());
     }
 
 
