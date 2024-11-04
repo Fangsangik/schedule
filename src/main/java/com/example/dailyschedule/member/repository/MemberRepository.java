@@ -128,4 +128,29 @@ public class MemberRepository {
                 .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
                 .build();
     }
+
+    public void deleteMember() {
+        String memberSql = "delete from member";
+        int memberDeletedCount = jdbcTemplate.update(memberSql);
+
+        if (memberDeletedCount == 0) {
+            throw new IllegalArgumentException("삭제할 데이터가 없습니다.");
+
+        }
+    }
+
+    public void deleteMemberAndSchedule() {
+
+        String memberSql = "delete from member";
+        String scheduleSql = "delete from schedule";
+
+        // 각 삭제 작업에 대해 영향을 받은 행 수 확인
+        int memberDeletedCount = jdbcTemplate.update(memberSql);
+        int scheduleDeletedCount = jdbcTemplate.update(scheduleSql);
+
+        // 삭제된 행이 없으면 예외 발생
+        if (memberDeletedCount == 0 && scheduleDeletedCount == 0) {
+            throw new IllegalArgumentException("삭제할 데이터가 없습니다.");
+        }
+    }
 }
