@@ -86,10 +86,9 @@ public class ScheduleServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    public ScheduleDto findByDate(LocalDateTime date) {
-        Schedule findDate = scheduleRepositoryImpl.findByDate(date);
-
-        if (findDate == null) {
+    public List<ScheduleDto> findByDate(LocalDateTime date) {
+        List<Schedule> findDates = scheduleRepositoryImpl.findByDate(date);
+        if (findDates.isEmpty()) {
             throw new IllegalArgumentException("해당 날짜에 대한 값이 존재하지 않습니다.");
         }
 
