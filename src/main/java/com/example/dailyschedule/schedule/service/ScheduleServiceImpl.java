@@ -1,8 +1,12 @@
 package com.example.dailyschedule.schedule.service;
 
+import com.example.dailyschedule.member.converter.MemberConverter;
 import com.example.dailyschedule.member.dto.MemberDto;
+import com.example.dailyschedule.member.entity.Member;
 import com.example.dailyschedule.member.repository.MemberRepository;
+import com.example.dailyschedule.member.service.MemberService;
 import com.example.dailyschedule.schedule.converter.ScheduleConverter;
+import com.example.dailyschedule.schedule.dto.CombinedScheduleDto;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.example.dailyschedule.schedule.repository.ScheduleRepositoryImpl;
@@ -20,24 +24,32 @@ public class ScheduleServiceImpl {
     private final ScheduleRepositoryImpl scheduleRepositoryImpl;
     private final ScheduleConverter scheduleConverter;
     private final ScheduleValidation scheduleValidation;
-    private final MemberRepository memberRepository;
+    private final MemberService memberService;
+    private final MemberConverter memberConverter;
 
     //생성자 주입
-    public ScheduleServiceImpl(ScheduleRepositoryImpl scheduleRepositoryImpl, ScheduleConverter scheduleConverter, MemberRepository memberRepository) {
+    public ScheduleServiceImpl(ScheduleRepositoryImpl scheduleRepositoryImpl, ScheduleConverter scheduleConverter, MemberRepository memberRepository, MemberConverter memberConverter, MemberService memberService) {
         this.scheduleRepositoryImpl = scheduleRepositoryImpl;
         this.scheduleConverter = scheduleConverter;
+        this.memberService = memberService;
         this.scheduleValidation = new ScheduleValidation(scheduleRepositoryImpl, memberRepository);
-        this.memberRepository = memberRepository;
+        this.memberConverter = memberConverter;
     }
-
 
     @Transactional
-    public ScheduleDto create(ScheduleDto scheduleDto) {
+    public ScheduleDto create(MemberDto memberDto, ScheduleDto scheduleDto) {
+        // MemberService를 통해 Member 정보 가져오기
+        Member member = memberConverter.toEntity(memberService.findByUserId(memberDto.getUserId()));
+
+        // 중복 ID 검증
         scheduleValidation.validationOfDuplicateId(scheduleDto.getId());
-        Schedule saveSchedule = scheduleRepositoryImpl.createSchedule(scheduleConverter.toEntity(scheduleDto));
+
+        // Member 객체를 함께 전달하여 Schedule 생성
+        Schedule saveSchedule = scheduleRepositoryImpl.createSchedule(scheduleConverter.toEntity(scheduleDto), member);
+
+        // ScheduleDto 반환
         return scheduleConverter.toDto(saveSchedule);
     }
-
 
     @Transactional(readOnly = true)
     public ScheduleDto findById(Long id) {
@@ -46,35 +58,30 @@ public class ScheduleServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    public ScheduleDto findByUpdatedDateAndAuthor (LocalDateTime updatedAt, String author) {
-        Schedule schedule = scheduleRepositoryImpl.findByUpdatedDateAndAuthor(updatedAt, author);
-        scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author, schedule);
-        return scheduleConverter.toDto(schedule);
+    public List<ScheduleDto> findByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author) {
+        scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author);
+
+        // 모든 결과를 리스트 형태로 반환
+        List<Schedule> schedules = scheduleRepositoryImpl.findSchedulesByUpdatedDateAndAuthor(updatedAt, author);
+        return schedules.stream()
+                .map(scheduleConverter::toDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<ScheduleDto> findByUpdatedDateDesc() {
         List<Schedule> byUpdatedDateByDesc = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc();
-
         List<ScheduleDto> scheduleDtos = new ArrayList<>();
         for (Schedule schedule : byUpdatedDateByDesc) {
-            ScheduleDto scheduleDto = ScheduleDto.builder()
-                    .id(schedule.getId())
-                    .author(schedule.getAuthor())
-                    .title(schedule.getTitle())
-                    .description(schedule.getDescription())
-                    .createdAt(schedule.getCreatedAt())
-                    .updatedAt(schedule.getUpdatedAt())
-                    .deletedAt(schedule.getDeletedAt())
-                    .build();
-            scheduleDtos.add(scheduleDto);
+            scheduleDtos.add(scheduleConverter.toDto(schedule));
         }
         return scheduleDtos;
     }
 
     @Transactional
-    public ScheduleDto update(ScheduleDto scheduleDto) {
-        Schedule updateSchedule = scheduleRepositoryImpl.updateSchedule(scheduleConverter.toEntity(scheduleDto));
+    public ScheduleDto update(MemberDto memberDto, ScheduleDto scheduleDto) {
+        Member member = memberConverter.toEntity(memberService.findByUserId(memberDto.getUserId()));
+        Schedule updateSchedule = scheduleRepositoryImpl.updateSchedule(member, scheduleConverter.toEntity(scheduleDto));
         return scheduleConverter.toDto(updateSchedule);
     }
 
@@ -89,20 +96,12 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(findDate);
     }
 
-    @Transactional
-    public void deleteById(ScheduleDto scheduleDto) {
-        Schedule existSchedule = scheduleRepositoryImpl.findScheduleById(scheduleDto.getId());
-        scheduleValidation.deleteByScheduleById(scheduleDto, existSchedule);
-        scheduleRepositoryImpl.deleteScheduleById(existSchedule.getId());
-    }
 
-    //Lv2
     @Transactional
-    public ScheduleDto updateTitleAndAuthor(ScheduleDto scheduleDto) {
-        Schedule existingSchedule = scheduleRepositoryImpl.findScheduleById(scheduleDto.getId());
-        Schedule updatedScheduleDto = scheduleValidation.updateTitleAndAuthor(scheduleDto, existingSchedule);
-        scheduleRepositoryImpl.updateSchedule(updatedScheduleDto);
-        return scheduleConverter.toDto(updatedScheduleDto);
+    public void deleteById(Long id, String password) {
+        Schedule existSchedule = scheduleRepositoryImpl.findScheduleById(id);
+        scheduleValidation.deleteByScheduleById(id, password, existSchedule);
+        scheduleRepositoryImpl.deleteScheduleById(existSchedule.getId());
     }
 
     //Lv3
