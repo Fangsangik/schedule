@@ -107,7 +107,11 @@ public class ScheduleServiceImpl {
         // validateAndPrepareUpdatedSchedule에서 업데이트된 Schedule을 반환받아 저장
         Schedule updatedSchedule = scheduleValidation.validateAndPrepareUpdatedSchedule(combinedScheduleDto, existingSchedule);
 
-        return scheduleConverter.toDto(findDate);
+        // 업데이트된 스케줄을 저장소에 반영
+        scheduleRepositoryImpl.updateSchedule(member, updatedSchedule);
+
+        // DTO로 변환하여 반환
+        return scheduleConverter.toDto(updatedSchedule);
     }
 
 
