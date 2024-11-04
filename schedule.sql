@@ -61,7 +61,24 @@ create table member (
     userId varchar(25) not null,
     email varchar(50) not null,
     updated_at DATETIME null,
-    name varchar(25) not null
+    name varchar(25) not null,
+    password varchar(255) not null
 );
 
 alter table member change userId user_id varchar(25) not null;
+
+ALTER TABLE member
+    ADD COLUMN password VARCHAR(255) NOT NULL;
+desc member;
+desc schedule;
+
+ALTER TABLE schedule
+    ADD CONSTRAINT fk_member_id
+        FOREIGN KEY (member_id) REFERENCES member(id)
+            ON UPDATE CASCADE;
+
+select * from member;
+select * from member where id = 99;
+
+insert into member (user_id, email, updated_at, name, password)
+value ('test','test','2022-04-04', 'test', 'test');
