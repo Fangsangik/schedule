@@ -91,6 +91,21 @@ public class ScheduleServiceImpl {
         if (findDates.isEmpty()) {
             throw new IllegalArgumentException("해당 날짜에 대한 값이 존재하지 않습니다.");
         }
+        List<ScheduleDto> scheduleDtoList = new ArrayList<>();
+        for (Schedule findDate : findDates) {
+            scheduleDtoList.add(scheduleConverter.toDto(findDate));
+        }
+        return scheduleDtoList;
+    }
+
+    //Lv2
+    @Transactional
+    public ScheduleDto updateTitleAndAuthor(Long scheduleId, CombinedScheduleDto combinedScheduleDto) {
+        Member member = memberConverter.toEntity(memberService.findByUserId(combinedScheduleDto.getMemberDto().getUserId()));
+        Schedule existingSchedule = scheduleRepositoryImpl.findScheduleById(scheduleId);
+
+        // validateAndPrepareUpdatedSchedule에서 업데이트된 Schedule을 반환받아 저장
+        Schedule updatedSchedule = scheduleValidation.validateAndPrepareUpdatedSchedule(combinedScheduleDto, existingSchedule);
 
         return scheduleConverter.toDto(findDate);
     }
