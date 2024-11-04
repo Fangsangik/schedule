@@ -8,6 +8,7 @@ import com.example.dailyschedule.member.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,14 +27,14 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public MemberDto findById(Long id) {
-        Member memberId = memberRepository.findById(id);
-        return memberConverter.toDto(memberId);
+        Member member = memberValidation.validateExistId(id);
+        return memberConverter.toDto(member);
     }
 
     @Transactional(readOnly = true)
     public MemberDto findByUserId(String userId) {
-        Member memberUserId = memberValidation.findByUserId(userId);
-        return memberConverter.toDto(memberUserId);
+        Member member = memberValidation.findByUserId(userId);
+        return memberConverter.toDto(member);
     }
 
     @Transactional(readOnly = true)
@@ -45,8 +46,8 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public MemberDto findByUsername(String username) {
-        Member name = memberValidation.findByName(username);
-        return memberConverter.toDto(name);
+        Member member = memberValidation.findByName(username);
+        return memberConverter.toDto(member);
     }
 
     @Transactional
@@ -59,24 +60,24 @@ public class MemberService {
     @Transactional
     public MemberDto updateMember(Long memberId, MemberDto memberDto) {
         Member existMember = memberValidation.validateExistId(memberId);
-        memberValidation.validatePassword(existMember, memberDto);
+        memberValidation.validatePassword(existMember, memberDto.getPassword());
 
         existMember = existMember.toBuilder()
                 .userId(memberDto.getUserId())
                 .password(memberDto.getPassword())
                 .email(memberDto.getEmail())
                 .name(memberDto.getName())
-                .updatedAt(memberDto.getUpdatedAt())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
-        Member updateMember = memberRepository.updateMember(existMember);
-        return memberConverter.toDto(updateMember);
+        Member updatedMember = memberRepository.updateMember(existMember);
+        return memberConverter.toDto(updatedMember);
     }
 
     @Transactional
-    public MemberDto deleteMember(Long memberId,MemberDto memberDto) {
+    public MemberDto deleteMember(Long memberId, String password) {
         Member member = memberValidation.validateExistId(memberId);
-        memberValidation.validatePassword(member, memberDto);
+        memberValidation.validatePassword(member, password);
         memberRepository.deleteMember(member.getId());
         return memberConverter.toDto(member);
     }
