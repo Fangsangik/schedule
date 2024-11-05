@@ -6,7 +6,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -51,7 +50,7 @@ public class MemberRepository {
                             .password(rs.getString("password"))
                             .name(rs.getString("name"))
                             .email(rs.getString("email"))
-                            .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
+                            .updatedAt(rs.getDate("updated_at"))
                             .build()
             );
         } catch (EmptyResultDataAccessException e) {
@@ -118,17 +117,6 @@ public class MemberRepository {
         return jdbcTemplate.queryForObject(sql, new Object[]{name}, memberRowMapper());
     }
 
-    private RowMapper<Member> memberRowMapper () {
-        return (rs, rowNum) -> Member.builder()
-                .id(rs.getLong("id"))
-                .name(rs.getString("name"))
-                .userId(rs.getString("user_id"))
-                .email(rs.getString("email"))
-                .password(rs.getString("password"))
-                .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
-                .build();
-    }
-
     public void deleteMember() {
         String memberSql = "delete from member";
         int memberDeletedCount = jdbcTemplate.update(memberSql);
@@ -152,5 +140,16 @@ public class MemberRepository {
         if (memberDeletedCount == 0 && scheduleDeletedCount == 0) {
             throw new IllegalArgumentException("삭제할 데이터가 없습니다.");
         }
+    }
+
+    private RowMapper<Member> memberRowMapper () {
+        return (rs, rowNum) -> Member.builder()
+                .id(rs.getLong("id"))
+                .name(rs.getString("name"))
+                .userId(rs.getString("user_id"))
+                .email(rs.getString("email"))
+                .password(rs.getString("password"))
+                .updatedAt(rs.getDate("updated_at"))
+                .build();
     }
 }
