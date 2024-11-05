@@ -25,6 +25,7 @@ class MemberServiceTest {
 
     @Test
     void createMemberTest() {
+        memberRepository.deleteMemberAndSchedule();
 
         MemberDto memberDto = MemberDto.builder()
                 .id(1L)
@@ -87,6 +88,8 @@ class MemberServiceTest {
 
     @Test
     void findAll() {
+        memberRepository.deleteMemberAndSchedule();
+
         MemberDto memberDto1 = MemberDto.builder()
                 .name("Test User")
                 .userId("uniqueUser123")
