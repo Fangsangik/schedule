@@ -176,6 +176,21 @@ public class ScheduleRepositoryImpl {
         return jdbcTemplate.query(sql, new Object[]{date, date, date}, scheduleRowMapper());
     }
 
+    //선텍 일정 조회
+    public Schedule findDateById(Long id, String field, Date date) {
+        if (date == null) {
+            throw new IllegalArgumentException("해당 날짜가 없습니다.");
+        }
+
+        if (!field.equals("created_at") && !field.equals("updated_at") && !field.equals("deleted_at")) {
+            throw new IllegalArgumentException("유요하지 않은 필드 이름입니다");
+        }
+
+        String sql = String.format("select * from schedule where %s = ? and id = ?", field);
+
+        // query 메서드를 사용하여 다수의 결과를 리스트로 반환
+        return jdbcTemplate.queryForObject(sql, new Object[]{date, id}, scheduleRowMapper());
+    }
 
     public List<Schedule> findSchedulesByMemberId(Long memberId) {
         if (memberId == null) {

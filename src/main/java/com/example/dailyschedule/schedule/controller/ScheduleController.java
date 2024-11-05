@@ -2,7 +2,12 @@ package com.example.dailyschedule.schedule.controller;
 
 import com.example.dailyschedule.schedule.dto.DeleteScheduleRequest;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
+<<<<<<< HEAD
 import com.example.dailyschedule.schedule.dto.UpdateScheduleDto;
+=======
+import com.example.dailyschedule.schedule.dto.SingleDateScheduleDto;
+import com.example.dailyschedule.schedule.dto.UpdatedDtoSchedule;
+>>>>>>> 800c2e4 (feat : "아이디로 선택 일정 조회")
 import com.example.dailyschedule.schedule.service.ScheduleServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -51,7 +56,25 @@ public class ScheduleController {
         }
     }
 
+<<<<<<< HEAD
     //update 날짜 조회
+=======
+    @GetMapping("/date/{scheduleId}")
+    public ResponseEntity<?> findByScheduleUpdatedDate(
+            @PathVariable Long scheduleId,
+            @RequestParam("field") String field,
+            @RequestParam Date date) {
+        try {
+            SingleDateScheduleDto dateById = scheduleService.findDateById(scheduleId, field ,date);
+            return ResponseEntity.status(HttpStatus.OK).body(dateById);
+        } catch (IllegalArgumentException e) {
+            log.error("헤당 정보를 찾을 수 없습니다. : {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    //해당 날짜 조회
+>>>>>>> 800c2e4 (feat : "아이디로 선택 일정 조회")
     @GetMapping("/date")
     public ResponseEntity<?> findByUpdatedDate(
             @RequestParam Date updatedAt) {
@@ -107,8 +130,12 @@ public class ScheduleController {
 
     //스케줄 생성
     @PostMapping("/")
+<<<<<<< HEAD
     public ResponseEntity<?> createSchedule(
             @RequestBody ScheduleDto scheduleDto) {
+=======
+    public ResponseEntity<?> createSchedule(@RequestBody ScheduleDto scheduleDto) {
+>>>>>>> 800c2e4 (feat : "아이디로 선택 일정 조회")
         try {
             ScheduleDto createSchedule = scheduleService.create(scheduleDto.getMemberDto(), scheduleDto);
             return ResponseEntity.status(HttpStatus.CREATED).body(createSchedule);
