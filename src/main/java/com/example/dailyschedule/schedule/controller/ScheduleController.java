@@ -2,19 +2,21 @@ package com.example.dailyschedule.schedule.controller;
 
 import com.example.dailyschedule.error.CustomException;
 import com.example.dailyschedule.error.type.ErrorCode;
-import com.example.dailyschedule.schedule.dto.CombinedScheduleDto;
 import com.example.dailyschedule.schedule.dto.DeleteScheduleRequest;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.example.dailyschedule.schedule.dto.SearchDto;
+import com.example.dailyschedule.schedule.dto.UpdateScheduleDto;
 import com.example.dailyschedule.schedule.service.ScheduleServiceImpl;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.sql.Date;
+
 
 @Slf4j
 @RestController
@@ -40,9 +42,11 @@ public class ScheduleController {
         }
     }
 
+    //Date -> DateTimeFormat 사용 X
     @GetMapping("/search")
     public ResponseEntity<?> findScheduleByUpdatedDateAndAuthor(
-            @RequestParam("updatedAt") @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime updatedAt,
+            @RequestParam("updatedAt")
+            Date updatedAt,
             @RequestParam("author") String author, SearchDto searchDto) {
         try {
             Page<ScheduleDto> findSchedules = scheduleService.findByUpdatedDateAndAuthor(updatedAt, author, searchDto);
@@ -55,13 +59,13 @@ public class ScheduleController {
 
     @GetMapping("/date")
     public ResponseEntity<?> findByUpdatedDate(
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime updatedAt,
+            @RequestParam Date updatedAt,
             SearchDto searchDto) {
         try {
             Page<ScheduleDto> findDate = scheduleService.findByDate(updatedAt, searchDto);
             return ResponseEntity.ok(findDate);
 
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("해당 날짜를 조회할 수 없습니다: {}", e.getMessage());
             throw new CustomException(ErrorCode.NOT_FOUND);
         }
@@ -72,7 +76,7 @@ public class ScheduleController {
         try {
             Page<ScheduleDto> findDate = scheduleService.findByUpdatedDateDesc(searchDto);
             return ResponseEntity.ok(findDate);
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("해당 날짜를 내림차순으로 조회 할 수 없습니다. : {}", e.getMessage());
             throw new CustomException(ErrorCode.ID_NOT_FOUND);
         }
@@ -87,7 +91,7 @@ public class ScheduleController {
         try {
             Page<ScheduleDto> findSchedules = scheduleService.findSchedulesByMemberId(searchDto, scheduleId, memberId);
             return ResponseEntity.status(HttpStatus.OK).body(findSchedules);
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("조회에 실패했습니다. : {} ", e.getMessage());
             throw new CustomException(ErrorCode.ID_NOT_FOUND);
 
@@ -101,7 +105,7 @@ public class ScheduleController {
         try {
             ScheduleDto findSchedule = scheduleService.findScheduleByMemberId(memberId, scheduleId);
             return ResponseEntity.status(HttpStatus.OK).body(findSchedule);
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("조회에 실패했습니다. : {} ", e.getMessage());
             throw new CustomException(ErrorCode.ID_NOT_FOUND);
         }
@@ -109,27 +113,28 @@ public class ScheduleController {
 
     @PostMapping("/")
     public ResponseEntity<?> createSchedule(
-            @RequestBody CombinedScheduleDto combinedScheduleDto) {
+            @Valid @RequestBody ScheduleDto scheduleDto) {
 
         try {
-            ScheduleDto createSchedule = scheduleService.create(combinedScheduleDto.getMemberDto(), combinedScheduleDto.getScheduleDto());
+            ScheduleDto createSchedule = scheduleService.create(scheduleDto.getMemberDto(), scheduleDto);
             return ResponseEntity.status(HttpStatus.CREATED).body(createSchedule);
-        } catch (IllegalArgumentException e) {
-            log.error("일정을 생성하는데 실패했습니다.. : {}", e.getMessage());
-            throw new CustomException(ErrorCode.NOT_FOUND);
+        } catch (CustomException e) {
+            log.error("일정을 생성하는데 실패했습니다: {}", e.getMessage());
+            throw new CustomException(ErrorCode.CREATION_FAILED);
         }
     }
 
     @PutMapping("/{scheduleId}")
     public ResponseEntity<?> updateSchedule(
             @PathVariable Long scheduleId,
-            @RequestBody CombinedScheduleDto combinedScheduleDto) {
+            @Valid @RequestBody UpdateScheduleDto updateScheduleDto) {
         try {
-            ScheduleDto updatedSchedules = scheduleService.updateTitleAndAuthor(scheduleId, combinedScheduleDto);
-            return ResponseEntity.status(HttpStatus.OK).body(updatedSchedules);
-        } catch (IllegalArgumentException e) {
-            log.error("일정을 수정하는데 실패했습니다. : {} ", e.getMessage());
-            throw new CustomException(ErrorCode.NOT_FOUND);
+            // updateTitleAndAuthor 메서드를 호출하여 업데이트 수행
+            ScheduleDto updatedSchedule = scheduleService.updateTitleAndAuthor(scheduleId, updateScheduleDto);
+            return ResponseEntity.status(HttpStatus.OK).body(updatedSchedule);
+        } catch (CustomException e) {
+            log.error("일정을 수정하는데 실패했습니다. : {}", e.getMessage());
+            throw new CustomException(ErrorCode.UPDATE_FAILED);
         }
     }
 
@@ -137,13 +142,13 @@ public class ScheduleController {
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<?> deleteSchedule(
             @PathVariable Long scheduleId,
-            @RequestBody DeleteScheduleRequest deleteScheduleRequest) {
+            @Valid @RequestBody DeleteScheduleRequest deleteScheduleRequest) {
         try {
             scheduleService.deleteById(scheduleId, deleteScheduleRequest.getPassword());
             return ResponseEntity.status(HttpStatus.OK).build();
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("일정을 삭제하는데 실패했습니다. : {}", e.getMessage());
-            throw new CustomException(ErrorCode.NOT_FOUND);
+            throw new CustomException(ErrorCode.DELETE_FAILED);
         }
     }
 }
