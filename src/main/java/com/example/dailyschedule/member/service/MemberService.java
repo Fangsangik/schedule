@@ -8,7 +8,7 @@ import com.example.dailyschedule.member.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.sql.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,7 +67,7 @@ public class MemberService {
                 .password(memberDto.getPassword())
                 .email(memberDto.getEmail())
                 .name(memberDto.getName())
-                .updatedAt(LocalDateTime.now())
+                .updatedAt(new Date(System.currentTimeMillis()))
                 .build();
 
         Member updatedMember = memberRepository.updateMember(existMember);

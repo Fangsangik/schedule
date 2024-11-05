@@ -5,8 +5,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.LocalDateTime;
+import java.sql.Date;
 
 @Data
 @NoArgsConstructor
@@ -29,6 +30,5 @@ public class MemberDto {
     @Email(message = "이메일 형식이 올바르지 않습니다.")
     private String email;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime updatedAt;
+    private Date updatedAt;
 }

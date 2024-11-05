@@ -1,29 +1,24 @@
 package com.example.dailyschedule.schedule.entity;
 
 import com.example.dailyschedule.member.entity.Member;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-import java.time.LocalDateTime;
+import java.util.Date;
+
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Setter
 public class Schedule {
     private Long id;
     private String title; //이벤트 제목
     private String author; //작성자
     private String password; //비말번호
     private String description; //상세 내용
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime createdAt; //생성 날짜
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime updatedAt; //수정 날짜
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime deletedAt; //삭제 날짜
+    private Date createdAt; //생성 날짜
+    private Date updatedAt; //수정 날짜
+    private Date deletedAt; //삭제 날짜
     private Member member;
 }
