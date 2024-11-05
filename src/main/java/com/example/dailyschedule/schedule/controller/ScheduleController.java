@@ -2,6 +2,7 @@ package com.example.dailyschedule.schedule.controller;
 
 import com.example.dailyschedule.schedule.dto.DeleteScheduleRequest;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
+import com.example.dailyschedule.schedule.dto.SingleDateScheduleDto;
 import com.example.dailyschedule.schedule.dto.UpdatedDtoSchedule;
 import com.example.dailyschedule.schedule.service.ScheduleServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +52,20 @@ public class ScheduleController {
         }
     }
 
+    @GetMapping("/date/{scheduleId}")
+    public ResponseEntity<?> findByScheduleUpdatedDate(
+            @PathVariable Long scheduleId,
+            @RequestParam("field") String field,
+            @RequestParam Date date) {
+        try {
+            SingleDateScheduleDto dateById = scheduleService.findDateById(scheduleId, field ,date);
+            return ResponseEntity.status(HttpStatus.OK).body(dateById);
+        } catch (IllegalArgumentException e) {
+            log.error("헤당 정보를 찾을 수 없습니다. : {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
     //해당 날짜 조회
     @GetMapping("/date")
     public ResponseEntity<?> findByUpdatedDate(
@@ -80,7 +95,6 @@ public class ScheduleController {
     //스케줄 생성
     @PostMapping("/")
     public ResponseEntity<?> createSchedule(@RequestBody ScheduleDto scheduleDto) {
-
         try {
             ScheduleDto createSchedule = scheduleService.create(scheduleDto);
             return ResponseEntity.status(HttpStatus.CREATED).body(createSchedule);

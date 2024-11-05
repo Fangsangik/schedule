@@ -1,6 +1,7 @@
 package com.example.dailyschedule.schedule.service;
 
 import com.example.dailyschedule.schedule.converter.ScheduleConverter;
+import com.example.dailyschedule.schedule.dto.SingleDateScheduleDto;
 import com.example.dailyschedule.schedule.dto.UpdatedDtoSchedule;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
@@ -54,6 +55,23 @@ public class ScheduleServiceImpl {
                 .collect(Collectors.toList());
     }
 
+    //선택 일정 조회 (선택한 일정 정보 불러오기)
+    @Transactional(readOnly = true)
+    public SingleDateScheduleDto findDateById(Long id, String field, Date date) {
+        Schedule schedule = scheduleValidation.validateExistId(id);
+        Schedule findDate = scheduleRepositoryImpl.findDateById(schedule.getId(), field, date);
+
+        return getSingleDateScheduleDto(field, findDate);
+    }
+
+    //스케줄 update (title, author)
+    @Transactional
+    public ScheduleDto updateTitleAndAuthor(Long id, UpdatedDtoSchedule updatedDtoSchedule) {
+        Schedule existingSchedule = scheduleRepositoryImpl.findScheduleById(id);
+        Schedule updatedSchedule = scheduleValidation.validateAndPrepareUpdatedSchedule(updatedDtoSchedule, existingSchedule);
+        scheduleRepositoryImpl.updateSchedule(updatedSchedule);
+        return scheduleConverter.toDto(updatedSchedule);
+    }
     //내림차순 조회
     @Transactional(readOnly = true)
     public List<ScheduleDto> findByUpdatedDateDesc() {
@@ -85,20 +103,30 @@ public class ScheduleServiceImpl {
         return scheduleDtoList;
     }
 
-    //스케줄 update (title, author)
-    @Transactional
-    public ScheduleDto updateTitleAndAuthor(Long id, UpdatedDtoSchedule updatedDtoSchedule) {
-        Schedule existingSchedule = scheduleRepositoryImpl.findScheduleById(id);
-        Schedule updatedSchedule = scheduleValidation.validateAndPrepareUpdatedSchedule(updatedDtoSchedule, existingSchedule);
-        scheduleRepositoryImpl.updateSchedule(updatedSchedule);
-        return scheduleConverter.toDto(updatedSchedule);
-    }
-
     //스케줄 삭제
     @Transactional
     public void deleteById(Long id, String password) {
         Schedule existSchedule = scheduleRepositoryImpl.findScheduleById(id);
         scheduleValidation.deleteByScheduleById(id, password, existSchedule);
         scheduleRepositoryImpl.deleteScheduleById(existSchedule.getId());
+    }
+
+    private static SingleDateScheduleDto getSingleDateScheduleDto(String field, Schedule findDate) {
+        Date selectDate;
+
+        switch (field) {
+            case "created_at":
+                selectDate = findDate.getCreatedAt();
+                break;
+            case "updated_at":
+                selectDate = findDate.getUpdatedAt();
+                break;
+            case "deleted_at":
+                selectDate = findDate.getDeletedAt();
+            default:
+                throw new IllegalArgumentException("유효하지 않은 필드 이름입니다.");
+        }
+
+        return new SingleDateScheduleDto(findDate.getId(), findDate.getTitle(), findDate.getAuthor(), selectDate);
     }
 }
