@@ -20,6 +20,7 @@ public class MemberRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    //생성
     public Member createMember(Member member) {
 
         String sql = "INSERT INTO member (user_id, password, name, email, updated_at) VALUES (?, ?, ?, ?, ?)";
@@ -43,6 +44,7 @@ public class MemberRepository {
                 .build();
     }
 
+    //userId 조회
     public Member findByUserId(String userId) {
         String selectMemberSql = "SELECT * FROM member WHERE user_id = ?";
         try {
@@ -62,11 +64,13 @@ public class MemberRepository {
     }
 
 
+    //전체 조회
     public List<Member> findAll() {
         String sql = "select * from member";
         return jdbcTemplate.query(sql, memberRowMapper());
     }
 
+    //아이디 조회
     public Member findById(Long id) {
         if (id == null) {
             throw new CustomException(ID_NOT_FOUND);
@@ -81,6 +85,7 @@ public class MemberRepository {
         }
     }
 
+    //Update
     public Member updateMember(Member member) {
         String sql = "update member set user_Id = ?, password = ?, name = ?, email = ?, updated_at = ? where id = ?";
 
@@ -99,6 +104,7 @@ public class MemberRepository {
         return member;
     }
 
+    //삭제
     public void deleteMember(Long id) {
         if (id == null) {
             throw new CustomException(ID_NOT_FOUND);
