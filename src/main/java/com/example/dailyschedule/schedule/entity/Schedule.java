@@ -3,7 +3,7 @@ package com.example.dailyschedule.schedule.entity;
 import com.example.dailyschedule.member.entity.Member;
 import lombok.*;
 
-import java.util.Date;
+import java.sql.Date;
 
 
 @Getter

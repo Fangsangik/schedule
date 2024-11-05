@@ -7,7 +7,6 @@ import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.example.dailyschedule.schedule.dto.SearchDto;
 import com.example.dailyschedule.schedule.dto.UpdateScheduleDto;
 import com.example.dailyschedule.schedule.service.ScheduleServiceImpl;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
