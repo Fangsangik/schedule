@@ -1,17 +1,16 @@
 package com.example.dailyschedule.schedule.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
-
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Builder
-public class CombinedScheduleDto {
-    private Long id;
+public class UpdatedDtoSchedule {
     private String title;
     private String author;
-    private LocalDateTime updatedAt;
     private String password;
 }
