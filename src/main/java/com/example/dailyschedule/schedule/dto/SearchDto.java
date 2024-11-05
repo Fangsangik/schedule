@@ -4,9 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+@AllArgsConstructor
 @Getter
 @Builder
-@AllArgsConstructor
 public class SearchDto {
     private int page = 1;         // 기본 페이지 번호
     private int pageSize = 10;    // 기본 페이지 크기
@@ -28,3 +28,4 @@ public class SearchDto {
         return (safePage - 1) * safePageSize;
     }
 }
+
