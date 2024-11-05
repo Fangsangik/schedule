@@ -71,9 +71,9 @@ public class MemberController {
 
     //삭제
     @DeleteMapping("/{memberId}")
-    public ResponseEntity<?> deleteMember(@PathVariable("memberId") Long memberId, MemberDto memberDto) {
+    public ResponseEntity<?> deleteMember(@PathVariable("memberId") Long memberId, @RequestBody String password) {
         try {
-            MemberDto deleteMember = memberService.deleteMember(memberId, memberDto);
+            MemberDto deleteMember = memberService.deleteMember(memberId, password);
             return ResponseEntity.ok(deleteMember);
         } catch (IllegalArgumentException e) {
             log.error("회원을 삭제하는데 실패했습니다. {}", e.getMessage());

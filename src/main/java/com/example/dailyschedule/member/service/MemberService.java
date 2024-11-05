@@ -65,7 +65,7 @@ public class MemberService {
     @Transactional
     public MemberDto updateMember(Long memberId, MemberDto memberDto) {
         Member existMember = memberValidation.validateExistId(memberId);
-        memberValidation.validatePassword(existMember, memberDto);
+        memberValidation.validatePassword(existMember, memberDto.getPassword());
 
         existMember = existMember.toBuilder()
                 .userId(memberDto.getUserId())
@@ -81,9 +81,9 @@ public class MemberService {
 
     //삭제
     @Transactional
-    public MemberDto deleteMember(Long memberId,MemberDto memberDto) {
+    public MemberDto deleteMember(Long memberId,String password) {
         Member member = memberValidation.validateExistId(memberId);
-        memberValidation.validatePassword(member, memberDto);
+        memberValidation.validatePassword(member, password);
         memberRepository.deleteMember(member.getId());
         return memberConverter.toDto(member);
     }

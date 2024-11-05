@@ -42,8 +42,8 @@ public class MemberValidation {
         return member;
     }
 
-    public void validatePassword(Member member, MemberDto memberDto) {
-        if (!member.getPassword().equals(memberDto.getPassword())) {
+    public void validatePassword(Member member, String inputPassword) {
+        if (!member.getPassword().equals(inputPassword)) {
             throw new CustomException(PASSWORD_INCORRECT);
         }
     }
