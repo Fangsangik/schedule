@@ -1,16 +1,15 @@
 package com.example.dailyschedule.schedule.controller;
 
-import com.example.dailyschedule.schedule.dto.CombinedScheduleDto;
 import com.example.dailyschedule.schedule.dto.DeleteScheduleRequest;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
+import com.example.dailyschedule.schedule.dto.UpdateScheduleDto;
 import com.example.dailyschedule.schedule.service.ScheduleServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.sql.Date;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,7 +38,7 @@ public class ScheduleController {
 
     @GetMapping("/search")
     public ResponseEntity<?> findScheduleByUpdatedDateAndAuthor(
-            @RequestParam("updatedAt") @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime updatedAt,
+            @RequestParam("updatedAt") Date updatedAt,
             @RequestParam("author") String author) {
         try {
             List<ScheduleDto> findSchedules = scheduleService.findByUpdatedDateAndAuthor(updatedAt, author);
@@ -52,7 +51,7 @@ public class ScheduleController {
 
     @GetMapping("/date")
     public ResponseEntity<?> findByUpdatedDate(
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime updatedAt) {
+            @RequestParam Date updatedAt) {
         try {
             List<ScheduleDto> findDate = scheduleService.findByDate(updatedAt);
             return ResponseEntity.ok(findDate);
@@ -103,30 +102,28 @@ public class ScheduleController {
 
     @PostMapping("/")
     public ResponseEntity<?> createSchedule(
-            @RequestBody CombinedScheduleDto combinedScheduleDto) {
-
+            @RequestBody ScheduleDto scheduleDto) {
         try {
-            ScheduleDto createSchedule = scheduleService.create(combinedScheduleDto.getMemberDto(), combinedScheduleDto.getScheduleDto());
+            ScheduleDto createSchedule = scheduleService.create(scheduleDto.getMemberDto(), scheduleDto);
             return ResponseEntity.status(HttpStatus.CREATED).body(createSchedule);
         } catch (IllegalArgumentException e) {
-            log.error("일정을 생성하는데 실패했습니다.. : {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            log.error("일정을 생성하는데 실패했습니다: {}", e.getMessage());
+            throw new IllegalArgumentException("일정을 생성하는데 실패했습니다.");
         }
     }
 
     @PutMapping("/{scheduleId}")
     public ResponseEntity<?> updateSchedule(
             @PathVariable Long scheduleId,
-            @RequestBody CombinedScheduleDto combinedScheduleDto) {
+            @RequestBody UpdateScheduleDto updatedDto) {
         try {
-            ScheduleDto updatedSchedules = scheduleService.updateTitleAndAuthor(scheduleId, combinedScheduleDto);
+            ScheduleDto updatedSchedules = scheduleService.updateTitleAndAuthor(scheduleId, updatedDto);
             return ResponseEntity.status(HttpStatus.OK).body(updatedSchedules);
         } catch (IllegalArgumentException e) {
             log.error("일정을 수정하는데 실패했습니다. : {} ", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
-
 
 
     @DeleteMapping("/{scheduleId}")
