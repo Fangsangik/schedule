@@ -9,6 +9,7 @@ import com.example.dailyschedule.member.repository.MemberRepository;
 import com.example.dailyschedule.member.service.MemberService;
 import com.example.dailyschedule.schedule.converter.ScheduleConverter;
 import com.example.dailyschedule.schedule.dto.SearchDto;
+import com.example.dailyschedule.schedule.dto.SingleDateScheduleDto;
 import com.example.dailyschedule.schedule.dto.UpdatedScheduleDto;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
@@ -40,6 +41,7 @@ public class ScheduleServiceImpl {
         this.memberConverter = memberConverter;
     }
 
+    //생성
     @Transactional
     public ScheduleDto create(MemberDto memberDto, ScheduleDto scheduleDto) {
         if (memberDto == null || memberDto.getId() == null) {
@@ -60,7 +62,7 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(saveSchedule);
     }
 
-
+    //update
     @Transactional
     public ScheduleDto update(MemberDto memberDto, ScheduleDto scheduleDto) {
         Member member = memberConverter.toEntity(memberService.findById(memberDto.getId()));
@@ -68,12 +70,14 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(updateSchedule);
     }
 
+    //id 조회
     @Transactional(readOnly = true)
     public ScheduleDto findById(Long id) {
         Schedule existId = scheduleValidation.validateExistId(id);
         return scheduleConverter.toDto(existId);
     }
 
+    //update 날짜와 작가 불러오기
     @Transactional(readOnly = true)
     public Page<ScheduleDto> findByUpdatedDateAndAuthor(Date updatedAt, String author, SearchDto searchDto) {
         scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author, searchDto);
@@ -87,6 +91,16 @@ public class ScheduleServiceImpl {
         return schedules.map(scheduleConverter::toDto);
     }
 
+    //선택 일정 조회 (선택한 일정 정보 불러오기)
+    @Transactional(readOnly = true)
+    public SingleDateScheduleDto findDateById(Long id, String field, Date date) {
+        Schedule schedule = scheduleValidation.validateExistId(id);
+        Schedule findDate = scheduleRepositoryImpl.findDateById(schedule.getId(), field, date);
+
+        return getSingleDateScheduleDto(field, findDate);
+    }
+
+    //내림차순 조회
     @Transactional(readOnly = true)
     public Page<ScheduleDto> findByUpdatedDateDesc(SearchDto searchDto) {
         Page<Schedule> byUpdatedDateByDesc = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc(searchDto);
@@ -94,6 +108,7 @@ public class ScheduleServiceImpl {
         return byUpdatedDateByDesc.map(scheduleConverter::toDto);
     }
 
+    //일정 조회
     @Transactional(readOnly = true)
     public Page<ScheduleDto> findByDate(Date date, SearchDto searchDto) {
         Page<Schedule> findDates = scheduleRepositoryImpl.findByDate(date, searchDto);
@@ -105,6 +120,7 @@ public class ScheduleServiceImpl {
     }
 
     //Lv2
+    //날짜와 작가명 수정
     @Transactional
     public ScheduleDto updateTitleAndAuthor(Long scheduleId, UpdatedScheduleDto updatedScheduleDto) {
         // 기존 일정 조회
@@ -119,6 +135,7 @@ public class ScheduleServiceImpl {
 
 
 
+    //삭제
     @Transactional
     public void deleteById(Long id, String password) {
         Schedule existSchedule = scheduleRepositoryImpl.findScheduleById(id);
@@ -130,10 +147,7 @@ public class ScheduleServiceImpl {
     @Transactional(readOnly = true)
     public Page<ScheduleDto> findSchedulesByMemberId(SearchDto searchDto,Long memberId, Long scheduleId) {
         // 검증: 해당 회원과 스케줄이 존재하는지 확인
-        scheduleValidation.validationOfFindScheduleByMemberId(
-                ScheduleDto.builder().id(scheduleId).build(),
-                MemberDto.builder().id(memberId).build()
-        );
+        scheduleValidation.validationOfFindScheduleByMemberId(ScheduleDto.builder().id(scheduleId).build(), MemberDto.builder().id(memberId).build());
 
         Page<Schedule> schedules = scheduleRepositoryImpl.findSchedulesByMemberId(memberId, searchDto);
         if (schedules.isEmpty()) {
@@ -143,13 +157,12 @@ public class ScheduleServiceImpl {
         return schedules.map(scheduleConverter::toDto);
     }
 
+    //스케줄 Id memberId 동시 조회
     @Transactional(readOnly = true)
     public ScheduleDto findScheduleByMemberId(Long memberId, Long scheduleId) {
         // 검증: 해당 회원과 스케줄이 존재하는지 확인
-        scheduleValidation.validationOfFindScheduleByMemberId(
-                ScheduleDto.builder().id(scheduleId).build(),
-                MemberDto.builder().id(memberId).build()
-        );
+        scheduleValidation.validationOfFindScheduleByMemberId(ScheduleDto.builder()
+                .id(scheduleId).build(), MemberDto.builder().id(memberId).build());
 
         // 검증이 통과하면 조회 진행
         Schedule schedule = scheduleRepositoryImpl.findSingleScheduleByMemberId(memberId);
@@ -159,4 +172,25 @@ public class ScheduleServiceImpl {
 
         return scheduleConverter.toDto(schedule);
     }
+
+
+    private static SingleDateScheduleDto getSingleDateScheduleDto(String field, Schedule findDate) {
+        Date selectDate;
+
+        switch (field) {
+            case "created_at":
+                selectDate = findDate.getCreatedAt();
+                break;
+            case "updated_at":
+                selectDate = findDate.getUpdatedAt();
+                break;
+            case "deleted_at":
+                selectDate = findDate.getDeletedAt();
+            default:
+                throw new IllegalArgumentException("유효하지 않은 필드 이름입니다.");
+        }
+
+        return new SingleDateScheduleDto(findDate.getId(), findDate.getTitle(), findDate.getAuthor(), selectDate);
+    }
+
 }

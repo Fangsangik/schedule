@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Date;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 @Repository
@@ -25,7 +26,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    // userId 제거
+    // 생성
     public Schedule createSchedule(Schedule schedule, Member member) {
 
         String sql = "INSERT INTO schedule (author, title, created_at, password, description, updated_at, deleted_at, member_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
@@ -57,6 +58,7 @@ public class ScheduleRepositoryImpl {
                 .build();
     }
 
+    //update
     public Schedule updateSchedule(Member member, Schedule schedule) {
         if (schedule.getId() == null) {
             throw new IllegalArgumentException("해당 id가 존재하지 않습니다.");
@@ -82,6 +84,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
+    //id로 조회
     public Schedule findScheduleById(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("Id 값이 null 입니다");
@@ -104,6 +107,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
+    //스케줄 삭제
     public void deleteScheduleById(Long scheduleId) {
 
         String sql = "delete from schedule where id = ?";
@@ -127,6 +131,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
+    //paging 처리 한 내림 차순 조회
     public Page<Schedule> findAllOrderByUpdatedDateDesc(SearchDto searchDto) {
 
         int limit = searchDto.getLimit();
@@ -149,6 +154,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
+    //paging 처리한 UpdateDateAuthor
     public Page<Schedule> findSchedulesByUpdatedDateAndAuthor(Date updatedAt, String author, SearchDto searchDto) {
         if (updatedAt == null && author == null) {
             throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
@@ -156,6 +162,22 @@ public class ScheduleRepositoryImpl {
 
         int limit = searchDto.getLimit();
         int offset = searchDto.getOffset();
+
+        // 전체 레코드 수를 먼저 조회하여 페이지가 범위를 넘는지 확인
+        String countSql = """
+            SELECT COUNT(*)
+              FROM schedule s
+              LEFT JOIN member m ON s.member_id = m.id
+              WHERE DATE(s.updated_at) = DATE(?) 
+                AND s.author = ?
+            """;
+
+        int total = jdbcTemplate.queryForObject(countSql, new Object[]{updatedAt, author}, Integer.class);
+
+        if (total == 0 || offset >= total) {
+            return new PageImpl<>(Collections.emptyList(), PageRequest.of(offset / limit, limit), total);
+        }
+
 
         String sql = """
                 SELECT s.*, 
@@ -177,6 +199,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
+    //날짜 Paging 조회
     public Page<Schedule> findByDate(Date date, SearchDto searchDto) {
         if (date == null) {
             throw new IllegalArgumentException("해당 날짜가 없습니다.");
@@ -192,32 +215,36 @@ public class ScheduleRepositoryImpl {
             throw new IllegalArgumentException("offset 값이 음수가 될 수 없습니다.");
         }
 
-        // 쿼리문: 조인 및 필터링 조건 추가
+        // 전체 개수 계산 쿼리
+        String countSql = """
+                SELECT COUNT(*) FROM schedule s
+                 WHERE s.created_at = ? OR s.updated_at = ? OR s.deleted_at = ?
+            """;
+        Long totalCount = jdbcTemplate.queryForObject(countSql, new Object[]{date, date, date}, Long.class);
+
+        if (totalCount == 0 || offset >= totalCount) {
+            return new PageImpl<>(Collections.emptyList(), PageRequest.of(offset / limit, limit), totalCount);
+        }
+
+        // 데이터 조회 쿼리
         String sql = """
-                    SELECT s.*, 
-                           m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
-                           m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
-                      FROM schedule s
-                      LEFT JOIN member m ON s.member_id = m.id
-                     WHERE s.created_at = ? OR s.updated_at = ? OR s.deleted_at = ?
-                     LIMIT ? OFFSET ?
-                """;
+                SELECT s.*, 
+                       m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                       m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+                  FROM schedule s
+                  LEFT JOIN member m ON s.member_id = m.id
+                 WHERE s.created_at = ? OR s.updated_at = ? OR s.deleted_at = ?
+                 LIMIT ? OFFSET ?
+            """;
 
         List<Schedule> schedules = jdbcTemplate.query(
                 sql, new Object[]{date, date, date, limit, offset}, scheduleRowMapper());
-
-        // 전체 개수 계산 쿼리
-        String countSql = """
-                    SELECT COUNT(*) FROM schedule s
-                     WHERE s.created_at = ? OR s.updated_at = ? OR s.deleted_at = ?
-                """;
-        Long totalCount = jdbcTemplate.queryForObject(countSql, new Object[]{date, date, date}, Long.class);
 
         PageRequest pageRequest = PageRequest.of(offset / limit, limit);
         return new PageImpl<>(schedules, pageRequest, totalCount);
     }
 
-
+    //paging 처리 스케줄id & memberId 동시 조회
     public Page<Schedule> findSchedulesByMemberId(Long memberId, SearchDto searchDto) {
         if (memberId == null) {
             throw new IllegalArgumentException("해당 회원 아이디가 존재하지 않습니다.");
@@ -226,21 +253,34 @@ public class ScheduleRepositoryImpl {
         int limit = searchDto.getLimit();
         int offset = searchDto.getOffset();
 
-        String sql = """
-                    SELECT s.*, 
-                           m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
-                           m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
-                      FROM schedule s
-                      LEFT JOIN member m ON s.member_id = m.id
-                     WHERE m.id = ?
-                     LIMIT ? OFFSET ?
-                """;
+        if (limit <= 0) {
+            throw new IllegalArgumentException("limit 값이 0보다 커야 합니다.");
+        }
+        if (offset < 0) {
+            throw new IllegalArgumentException("offset 값이 음수가 될 수 없습니다.");
+        }
 
-        List<Schedule> schedules = jdbcTemplate.query(sql, new Object[]{memberId, limit, offset}, scheduleRowMapper());
-
-        // 전체 일정 개수를 계산하는 쿼리
+        // 전체 일정 개수 쿼리
         String countSql = "SELECT COUNT(*) FROM schedule WHERE member_id = ?";
         Long totalCount = jdbcTemplate.queryForObject(countSql, new Object[]{memberId}, Long.class);
+
+        // 빈 페이지 반환 조건
+        if (totalCount == 0 || offset >= totalCount) {
+            return new PageImpl<>(Collections.emptyList(), PageRequest.of(offset / limit, limit), totalCount);
+        }
+
+        // 데이터 조회 쿼리
+        String sql = """
+                SELECT s.*, 
+                       m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                       m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+                  FROM schedule s
+                  LEFT JOIN member m ON s.member_id = m.id
+                 WHERE m.id = ?
+                 LIMIT ? OFFSET ?
+            """;
+
+        List<Schedule> schedules = jdbcTemplate.query(sql, new Object[]{memberId, limit, offset}, scheduleRowMapper());
 
         PageRequest pageRequest = PageRequest.of(offset / limit, limit);
         return new PageImpl<>(schedules, pageRequest, totalCount);
@@ -261,6 +301,22 @@ public class ScheduleRepositoryImpl {
         } catch (EmptyResultDataAccessException e) {
             return null;
         }
+    }
+
+    //선텍 일정 조회
+    public Schedule findDateById(Long id, String field, Date date) {
+        if (date == null) {
+            throw new IllegalArgumentException("해당 날짜가 없습니다.");
+        }
+
+        if (!field.equals("created_at") && !field.equals("updated_at") && !field.equals("deleted_at")) {
+            throw new IllegalArgumentException("유요하지 않은 필드 이름입니다");
+        }
+
+        String sql = String.format("select * from schedule where %s = ? and id = ?", field);
+
+        // query 메서드를 사용하여 다수의 결과를 리스트로 반환
+        return jdbcTemplate.queryForObject(sql, new Object[]{date, id}, scheduleRowMapper());
     }
 
     private RowMapper<Schedule> scheduleRowMapper() {

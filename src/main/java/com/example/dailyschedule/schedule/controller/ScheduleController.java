@@ -7,6 +7,7 @@ import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.example.dailyschedule.schedule.dto.SearchDto;
 import com.example.dailyschedule.schedule.dto.UpdatedScheduleDto;
 import com.example.dailyschedule.schedule.service.ScheduleServiceImpl;
+import com.example.dailyschedule.schedule.dto.SingleDateScheduleDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ public class ScheduleController {
         this.scheduleService = scheduleService;
     }
 
+    //아이디 조회
     @GetMapping("/{scheduleId}")
     public ResponseEntity<?> findById(@PathVariable Long scheduleId) {
 
@@ -39,6 +41,7 @@ public class ScheduleController {
         }
     }
 
+    //updated 날짜와 작성자로 조회
     @GetMapping("/search")
     public ResponseEntity<?> findScheduleByUpdatedDateAndAuthor(
             @RequestParam("updatedAt") Date updatedAt,
@@ -52,6 +55,7 @@ public class ScheduleController {
         }
     }
 
+    //update 날짜로 조회
     @GetMapping("/date")
     public ResponseEntity<?> findByUpdatedDate(
             @RequestParam Date updatedAt,
@@ -66,6 +70,7 @@ public class ScheduleController {
         }
     }
 
+    //내림차순 조회
     @GetMapping("/dateDesc")
     public ResponseEntity<?> findByUpdatedDateDesc(SearchDto searchDto) {
         try {
@@ -77,6 +82,7 @@ public class ScheduleController {
         }
     }
 
+    //동시 조회 Page
     @GetMapping("/{memberId}/{scheduleId}")
     public ResponseEntity<?> findSchedulesByMemberId(
             @PathVariable Long memberId,
@@ -93,6 +99,7 @@ public class ScheduleController {
         }
     }
 
+    //동시 조회
     @GetMapping("/{memberId}/schedules/{scheduleId}")
     public ResponseEntity<?> findScheduleByMemberId(@PathVariable Long memberId,
                                                     @PathVariable Long scheduleId
@@ -106,6 +113,22 @@ public class ScheduleController {
         }
     }
 
+    // 특정 날짜 필드를 지정하여 일정 조회
+    @GetMapping("/date/{scheduleId}")
+    public ResponseEntity<?> findByScheduleUpdatedDate(
+            @PathVariable Long scheduleId,
+            @RequestParam("field") String field,
+            @RequestParam Date date) {
+        try {
+            SingleDateScheduleDto dateById = scheduleService.findDateById(scheduleId, field, date);
+            return ResponseEntity.status(HttpStatus.OK).body(dateById);
+        } catch (IllegalArgumentException e) {
+            log.error("해당 정보를 찾을 수 없습니다: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    //생성
     @PostMapping("/")
     public ResponseEntity<?> createSchedule(
             @RequestBody ScheduleDto scheduleDto) {
@@ -119,6 +142,7 @@ public class ScheduleController {
         }
     }
 
+    //update 날짜
     @PutMapping("/{scheduleId}")
     public ResponseEntity<?> updateSchedule(
             @PathVariable Long scheduleId,
@@ -133,6 +157,7 @@ public class ScheduleController {
     }
 
 
+    //삭제
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<?> deleteSchedule(
             @PathVariable Long scheduleId,
