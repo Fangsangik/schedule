@@ -7,7 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.sql.Date;
 import java.util.List;
 
 @Repository
@@ -31,7 +31,7 @@ public class ScheduleRepositoryImpl {
                 schedule.getCreatedAt(),
                 schedule.getPassword(),
                 schedule.getDescription(),
-                schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now(),
+                schedule.getUpdatedAt(),
                 schedule.getDeletedAt(),
                 member.getId() // Member 객체에서 member_id를 가져옴
         );
@@ -46,7 +46,7 @@ public class ScheduleRepositoryImpl {
                 .password(schedule.getPassword())
                 .description(schedule.getDescription())
                 .createdAt(schedule.getCreatedAt())
-                .updatedAt(schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now())
+                .updatedAt(schedule.getUpdatedAt())
                 .deletedAt(schedule.getDeletedAt())
                 .member(member) // Member 객체 설정
                 .build();
@@ -69,20 +69,31 @@ public class ScheduleRepositoryImpl {
                 schedule.getDeletedAt(),
                 member.getId(),
                 schedule.getId());  // 마지막 파라미터로 id 추가
+
         if (updatedRows == 0) {
             throw new IllegalArgumentException("업데이트 실패");
         }
         return schedule;
     }
 
-
     public Schedule findScheduleById(Long id) {
-        // 필요한 모든 필드를 조회하도록 쿼리 작성
-        String sql = "SELECT * FROM schedule WHERE id = ?";
+        if (id == null) {
+            throw new IllegalArgumentException("Id 값이 null 입니다");
+        }
+
+        String sql = """
+                    SELECT s.*, 
+                           m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                           m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+                      FROM schedule s
+                      LEFT JOIN member m ON s.member_id = m.id
+                     WHERE s.id = ?
+                """;
+
         try {
             return jdbcTemplate.queryForObject(sql, new Object[]{id}, scheduleRowMapper());
         } catch (EmptyResultDataAccessException e) {
-            return null;  // 조회 결과가 없을 경우 null 반환
+            return null; // 조회 결과가 없을 경우 null 반환
         }
     }
 
@@ -111,35 +122,59 @@ public class ScheduleRepositoryImpl {
 
 
     public List<Schedule> findAllOrderByUpdatedDateDesc() {
-        String sql = "SELECT * FROM schedule ORDER BY updated_at DESC";
+        String sql = """
+                                    SELECT s.*, 
+                                           m.id AS member_id, 
+                                           m.user_id AS user_id, 
+                                           m.password AS member_password, 
+                                           m.name AS member_name, 
+                                           m.email AS member_email, 
+                                           m.updated_at AS member_updated_at
+                                      FROM schedule s
+                                      LEFT JOIN member m ON s.member_id = m.id
+                                     ORDER BY s.updated_at DESC
+                """;
         return jdbcTemplate.query(sql, scheduleRowMapper());
     }
 
 
-
-
-    public List<Schedule> findSchedulesByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author) {
+    public List<Schedule> findSchedulesByUpdatedDateAndAuthor(Date updatedAt, String author) {
         if (updatedAt == null && author == null) {
             throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
         }
 
-        String sql = "SELECT * FROM schedule WHERE (updated_at = ? OR ? IS NULL) OR (author = ? OR ? IS NULL) ORDER BY updated_at DESC";
+        String sql = """
+                    SELECT s.*, 
+                           m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                           m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+                      FROM schedule s
+                      LEFT JOIN member m ON s.member_id = m.id
+                      WHERE DATE(s.updated_at) = DATE(?) 
+                       AND s.author = ?
+                     ORDER BY s.updated_at DESC
+                """;
 
-        return jdbcTemplate.query(sql, new Object[]{updatedAt, updatedAt, author, author}, scheduleRowMapper());
+        return jdbcTemplate.query(sql, new Object[]{updatedAt, author}, scheduleRowMapper());
     }
 
 
-    public List<Schedule> findByDate(LocalDateTime date) {
+    public List<Schedule> findByDate(Date date) {
         if (date == null) {
             throw new IllegalArgumentException("해당 날짜가 없습니다.");
         }
 
-        String sql = "SELECT * FROM schedule WHERE created_at = ? OR updated_at = ? OR deleted_at = ?";
+        String sql = """
+                    SELECT s.*, 
+                           m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                           m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+                      FROM schedule s
+                      LEFT JOIN member m ON s.member_id = m.id
+                     WHERE s.created_at = ? OR s.updated_at = ? OR s.deleted_at = ?
+                """;
 
         // query 메서드를 사용하여 다수의 결과를 리스트로 반환
         return jdbcTemplate.query(sql, new Object[]{date, date, date}, scheduleRowMapper());
     }
-
 
 
     public List<Schedule> findSchedulesByMemberId(Long memberId) {
@@ -147,13 +182,28 @@ public class ScheduleRepositoryImpl {
             throw new IllegalArgumentException("해당 회원 아이디가 존재하지 않습니다.");
         }
 
-        String sql = "select * from schedule s left join member m on s.member_id = m.id where m.id = ?";
+        String sql = """
+                    SELECT s.*, 
+                           m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                           m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+                      FROM schedule s
+                      LEFT JOIN member m ON s.member_id = m.id
+                     WHERE m.id = ?
+                """;
 
         return jdbcTemplate.query(sql, new Object[]{memberId}, scheduleRowMapper());
     }
 
     public Schedule findSingleScheduleByMemberId(Long memberId) {
-        String sql = "SELECT * FROM schedule s LEFT JOIN member m ON s.member_id = m.id WHERE m.id = ? LIMIT 1";
+        String sql = """
+                    SELECT s.*, 
+                           m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                           m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+                      FROM schedule s
+                      LEFT JOIN member m ON s.member_id = m.id
+                     WHERE m.id = ?
+                     LIMIT 1
+                """;
         try {
             return jdbcTemplate.queryForObject(sql, new Object[]{memberId}, scheduleRowMapper());
         } catch (EmptyResultDataAccessException e) {
@@ -164,10 +214,18 @@ public class ScheduleRepositoryImpl {
 
     private RowMapper<Schedule> scheduleRowMapper() {
         return (rs, rowNum) -> {
-            Long memberId = rs.getLong("member_id");
+            Member member = null;
+            if (rs.getObject("member_id") != null) {
 
-            // 필요한 경우 memberId로 Member 객체 생성 또는 조회
-            Member member = Member.builder().id(memberId).build();
+                member = Member.builder()
+                        .id(rs.getLong("member_id"))
+                        .userId(rs.getString("user_id"))
+                        .password(rs.getString("member_password"))
+                        .name(rs.getString("member_name"))
+                        .email(rs.getString("member_email"))
+                        .updatedAt(rs.getDate("member_updated_at"))
+                        .build();
+            }
 
             return Schedule.builder()
                     .id(rs.getLong("id"))
@@ -175,9 +233,9 @@ public class ScheduleRepositoryImpl {
                     .title(rs.getString("title"))
                     .password(rs.getString("password"))
                     .description(rs.getString("description"))
-                    .createdAt(rs.getObject("created_at", LocalDateTime.class))
-                    .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
-                    .deletedAt(rs.getObject("deleted_at", LocalDateTime.class))
+                    .createdAt(rs.getDate("created_at"))
+                    .updatedAt(rs.getDate("updated_at"))
+                    .deletedAt(rs.getDate("deleted_at"))
                     .member(member)  // member_id를 설정한 Member 객체 설정
                     .build();
         };
