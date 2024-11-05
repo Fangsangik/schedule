@@ -67,6 +67,7 @@ public class ScheduleValidation {
         validateId(id, schedule);
     }
 
+    //title author update 검증 메서드
     public Schedule validateAndPrepareUpdatedSchedule(UpdateScheduleDto updateScheduleDto, Schedule existingSchedule) {
         // ID와 비밀번호 유효성 검사
         if (!existingSchedule.getPassword().equals(updateScheduleDto.getPassword())) {

@@ -24,18 +24,21 @@ public class MemberService {
         this.memberValidation = new MemberValidation(memberRepository);
     }
 
+    //아이디 조회
     @Transactional(readOnly = true)
     public MemberDto findById(Long id) {
         Member memberId = memberRepository.findById(id);
         return memberConverter.toDto(memberId);
     }
 
+    //userId 조회
     @Transactional(readOnly = true)
     public MemberDto findByUserId(String userId) {
         Member memberUserId = memberValidation.findByUserId(userId);
         return memberConverter.toDto(memberUserId);
     }
 
+    //전체 조회
     @Transactional(readOnly = true)
     public List<MemberDto> findAll() {
         List<Member> members = memberRepository.findAll();
@@ -43,12 +46,14 @@ public class MemberService {
                 .collect(Collectors.toList());
     }
 
+    //이름으로 조회
     @Transactional(readOnly = true)
     public MemberDto findByUsername(String username) {
         Member name = memberValidation.findByName(username);
         return memberConverter.toDto(name);
     }
 
+    //생성
     @Transactional
     public MemberDto createMember(MemberDto memberDto) {
         memberValidation.validateDuplicateUserId(memberDto.getUserId());
@@ -56,6 +61,7 @@ public class MemberService {
         return memberConverter.toDto(member);
     }
 
+    //update
     @Transactional
     public MemberDto updateMember(Long memberId, MemberDto memberDto) {
         Member existMember = memberValidation.validateExistId(memberId);
@@ -73,6 +79,7 @@ public class MemberService {
         return memberConverter.toDto(updateMember);
     }
 
+    //삭제
     @Transactional
     public MemberDto deleteMember(Long memberId,MemberDto memberDto) {
         Member member = memberValidation.validateExistId(memberId);

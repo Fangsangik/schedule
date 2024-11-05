@@ -38,6 +38,7 @@ public class ScheduleServiceImpl {
         this.memberConverter = memberConverter;
     }
 
+    //스케줄 생성
     @Transactional
     public ScheduleDto create(MemberDto memberDto, ScheduleDto scheduleDto) {
         if (memberDto == null || memberDto.getId() == null) {
@@ -58,12 +59,14 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(saveSchedule);
     }
 
+    //스케줄 Id 조회
     @Transactional(readOnly = true)
     public ScheduleDto findById(Long id) {
         Schedule existId = scheduleValidation.validateExistId(id);
         return scheduleConverter.toDto(existId);
     }
 
+    //업데이트 날짜와 작성자 명으로 스케줄 조회
     @Transactional(readOnly = true)
     public List<ScheduleDto> findByUpdatedDateAndAuthor(Date updatedAt, String author) {
         scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author);
@@ -75,6 +78,7 @@ public class ScheduleServiceImpl {
                 .collect(Collectors.toList());
     }
 
+    //update 날짜 내림차순 조회
     @Transactional(readOnly = true)
     public List<ScheduleDto> findByUpdatedDateDesc() {
         List<Schedule> byUpdatedDateByDesc = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc();
@@ -85,6 +89,7 @@ public class ScheduleServiceImpl {
         return scheduleDtos;
     }
 
+    //update
     @Transactional
     public ScheduleDto update(MemberDto memberDto, ScheduleDto scheduleDto) {
         Member member = memberConverter.toEntity(memberService.findById(memberDto.getId()));
@@ -92,6 +97,7 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(updateSchedule);
     }
 
+    //update 날짜 조회
     @Transactional(readOnly = true)
     public List<ScheduleDto> findByDate(Date date) {
         List<Schedule> findDates = scheduleRepositoryImpl.findByDate(date);
@@ -106,6 +112,7 @@ public class ScheduleServiceImpl {
     }
 
     //Lv2
+    //스케줄 update (title, author)
     @Transactional
     public ScheduleDto updateTitleAndAuthor(Long scheduleId, UpdateScheduleDto updateScheduleDto) {
         // 기존 일정 조회
@@ -118,7 +125,7 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(updatedSchedule);
     }
 
-
+    //스케줄 삭제
     @Transactional
     public void deleteById(Long id, String password) {
         Schedule existSchedule = scheduleRepositoryImpl.findScheduleById(id);
@@ -127,6 +134,7 @@ public class ScheduleServiceImpl {
     }
 
     //Lv3
+    //회원 Id, 스케줄 Id 동시 조회 List
     @Transactional(readOnly = true)
     public List<ScheduleDto> findSchedulesByMemberId(Long memberId, Long scheduleId) {
         // 검증: 해당 회원과 스케줄이 존재하는지 확인
@@ -145,6 +153,7 @@ public class ScheduleServiceImpl {
                 .collect(Collectors.toList());
     }
 
+    //회원 Id, 스케줄 Id 동시 조회
     @Transactional(readOnly = true)
     public ScheduleDto findScheduleByMemberId(Long memberId, Long scheduleId) {
         // 검증: 해당 회원과 스케줄이 존재하는지 확인

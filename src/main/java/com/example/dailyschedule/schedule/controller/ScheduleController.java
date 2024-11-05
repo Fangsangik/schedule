@@ -24,6 +24,7 @@ public class ScheduleController {
         this.scheduleService = scheduleService;
     }
 
+    //스케줄 Id 조회
     @GetMapping("/{scheduleId}")
     public ResponseEntity<?> findById(@PathVariable Long scheduleId) {
 
@@ -36,6 +37,7 @@ public class ScheduleController {
         }
     }
 
+    //업데이트 날짜와 작성자 명으로 스케줄 조회
     @GetMapping("/search")
     public ResponseEntity<?> findScheduleByUpdatedDateAndAuthor(
             @RequestParam("updatedAt") Date updatedAt,
@@ -49,19 +51,20 @@ public class ScheduleController {
         }
     }
 
+    //update 날짜 조회
     @GetMapping("/date")
     public ResponseEntity<?> findByUpdatedDate(
             @RequestParam Date updatedAt) {
         try {
             List<ScheduleDto> findDate = scheduleService.findByDate(updatedAt);
             return ResponseEntity.ok(findDate);
-
         } catch (IllegalArgumentException e) {
             log.error("해당 날짜를 조회할 수 없습니다: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
         }
     }
 
+    //update 날짜 내림차순 조회
     @GetMapping("/dateDesc")
     public ResponseEntity<?> findByUpdatedDateDesc() {
         try {
@@ -73,6 +76,7 @@ public class ScheduleController {
         }
     }
 
+    //회원 Id, 스케줄 Id 동시 조회 List
     @GetMapping("/{memberId}/{scheduleId}")
     public ResponseEntity<?> findSchedulesByMemberId(
             @PathVariable Long memberId,
@@ -87,6 +91,7 @@ public class ScheduleController {
         }
     }
 
+    //회원 Id, 스케줄 Id 동시 조회
     @GetMapping("/{memberId}/schedules/{scheduleId}")
     public ResponseEntity<?> findScheduleByMemberId(@PathVariable Long memberId,
                                                     @PathVariable Long scheduleId
@@ -100,6 +105,7 @@ public class ScheduleController {
         }
     }
 
+    //스케줄 생성
     @PostMapping("/")
     public ResponseEntity<?> createSchedule(
             @RequestBody ScheduleDto scheduleDto) {
@@ -112,6 +118,7 @@ public class ScheduleController {
         }
     }
 
+    //스케줄 update (title, author)
     @PutMapping("/{scheduleId}")
     public ResponseEntity<?> updateSchedule(
             @PathVariable Long scheduleId,
@@ -125,7 +132,7 @@ public class ScheduleController {
         }
     }
 
-
+    //스케줄 삭제
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<?> deleteSchedule(
             @PathVariable Long scheduleId,
