@@ -82,3 +82,42 @@ GROUP BY user_id
 HAVING COUNT(*) > 1;
 
 ALTER TABLE member ADD CONSTRAINT unique_user_id UNIQUE (user_id);
+
+SHOW INDEX FROM member WHERE Non_unique = 0 AND Column_name = 'user_id';
+ALTER TABLE member DROP INDEX unique_user_id;
+SHOW INDEX FROM member;
+
+select * from Member;
+
+SELECT s.*,
+       m.id AS member_id, m.user_id AS user_id, m.password AS member_password,
+       m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+FROM schedule s
+         LEFT JOIN member m ON s.member_id = m.id
+WHERE (s.updated_at >= '2024-11-04T18:30' or NULL AND s.updated_at < '2024-11-04T18:30' or NULL)
+  AND (s.author = 'Jane Doe' or null)
+ORDER BY s.updated_at DESC
+LIMIT 10 OFFSET 0;
+
+
+INSERT INTO schedule
+(author, title, created_at, password, description, updated_at, deleted_at, member_id)
+VALUES
+    ('someone',
+     'test',
+     '2024-01-01 00:00:00', -- 날짜 형식이 올바르게 맞춰져야 합니다
+     '1234',
+     'sth',
+     NULL,
+     NULL,
+     1);
+
+SELECT s.*,
+       m.id AS member_id, m.user_id AS user_id, m.password AS member_password,
+       m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+FROM schedule s
+         LEFT JOIN member m ON s.member_id = m.id
+WHERE DATE(s.updated_at) = '2024-11-05'
+  AND s.author = 'UpdatedAuthor';
+
+select * from schedule;

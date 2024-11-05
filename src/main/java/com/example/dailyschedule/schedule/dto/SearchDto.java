@@ -18,10 +18,12 @@ public class SearchDto {
         this.recordSize = 10;
     }
 
+    //몇개까지 주세요
     public int getLimit() {
         return recordSize > 0 ? recordSize : 10;  // 기본 limit을 10으로 설정
     }
 
+    //어디부터 시작 0 부터 / 시작 어디로 볼 위치
     public int getOffset() {
         int safePage = Math.max(1, page);
         int safePageSize = Math.max(1, pageSize);
