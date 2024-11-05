@@ -37,8 +37,9 @@ public class MemberValidation {
         return member;
     }
 
-    public void validatePassword(Member member, MemberDto memberDto) {
-        if (!member.getPassword().equals(memberDto.getPassword())) {
+    public void validatePassword(Member member, String inputPassword) {
+        // 데이터베이스에 저장된 비밀번호와 입력받은 비밀번호를 직접 비교
+        if (!member.getPassword().equals(inputPassword)) {
             throw new IllegalArgumentException("비밀번호가 맞지 않습니다.");
         }
     }

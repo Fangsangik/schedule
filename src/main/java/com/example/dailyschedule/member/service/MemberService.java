@@ -79,11 +79,10 @@ public class MemberService {
         return memberConverter.toDto(updateMember);
     }
 
-    //삭제
     @Transactional
-    public MemberDto deleteMember(Long memberId,MemberDto memberDto) {
+    public MemberDto deleteMember(Long memberId, String password) {
         Member member = memberValidation.validateExistId(memberId);
-        memberValidation.validatePassword(member, memberDto);
+        memberValidation.validatePassword(member, password);
         memberRepository.deleteMember(member.getId());
         return memberConverter.toDto(member);
     }
