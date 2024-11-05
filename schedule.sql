@@ -82,3 +82,30 @@ select * from member where id = 99;
 
 insert into member (user_id, email, updated_at, name, password)
 value ('test','test','2022-04-04', 'test', 'test');
+
+
+SELECT user_id, COUNT(*)
+FROM member
+GROUP BY user_id
+HAVING COUNT(*) > 1;
+
+ALTER TABLE member ADD CONSTRAINT unique_user_id UNIQUE (user_id);
+
+SHOW INDEX FROM member WHERE Non_unique = 0 AND Column_name = 'user_id';
+ALTER TABLE member DROP INDEX unique_user_id;
+SHOW INDEX FROM member;
+
+    SELECT s.*,
+          m.id AS member_id, m.user_id AS user_id, m.password AS member_password,
+          m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+     FROM schedule s
+     LEFT JOIN member m ON s.member_id = m.id
+    WHERE s.id = 691;
+
+select *
+from schedule;
+
+desc schedule;
+
+select * from member where id = 822;
+
