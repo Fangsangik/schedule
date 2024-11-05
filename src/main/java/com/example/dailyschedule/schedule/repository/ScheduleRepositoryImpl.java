@@ -11,8 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
-import java.util.Date;
+import java.sql.Date;
 import java.util.List;
 
 @Repository
@@ -36,7 +35,7 @@ public class ScheduleRepositoryImpl {
                 schedule.getCreatedAt(),
                 schedule.getPassword(),
                 schedule.getDescription(),
-                schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now(),
+                schedule.getUpdatedAt(),
                 schedule.getDeletedAt(),
                 member.getId() // Member 객체에서 member_id를 가져옴
         );
@@ -158,22 +157,38 @@ public class ScheduleRepositoryImpl {
         int offset = searchDto.getOffset();
 
         String sql = """
-                SELECT s.*, 
-                       m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
-                       m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
-                  FROM schedule s
-                  LEFT JOIN member m ON s.member_id = m.id
-                  WHERE DATE(s.updated_at) = DATE(?) 
-                   AND s.author = ?
-                 ORDER BY s.updated_at DESC 
-                 LIMIT ? OFFSET ?
-            """;
+                    SELECT s.*, 
+                           m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                           m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+                      FROM schedule s
+                      LEFT JOIN member m ON s.member_id = m.id
+                      WHERE DATE(s.updated_at) = DATE(?) 
+                       AND s.author = ?
+                     ORDER BY s.updated_at DESC 
+                     LIMIT ? OFFSET ?
+                """;
 
         List<Schedule> schedules = jdbcTemplate.query(sql,
                 new Object[]{updatedAt, author, limit, offset},
                 scheduleRowMapper());
 
         return new PageImpl<>(schedules, PageRequest.of(offset / limit, limit), schedules.size());
+    }
+
+    //선텍 일정 조회
+    public Schedule findDateById(Long id, String field, Date date) {
+        if (date == null) {
+            throw new IllegalArgumentException("해당 날짜가 없습니다.");
+        }
+
+        if (!field.equals("created_at") && !field.equals("updated_at") && !field.equals("deleted_at")) {
+            throw new IllegalArgumentException("유요하지 않은 필드 이름입니다");
+        }
+
+        String sql = String.format("select * from schedule where %s = ? and id = ?", field);
+
+        // query 메서드를 사용하여 다수의 결과를 리스트로 반환
+        return jdbcTemplate.queryForObject(sql, new Object[]{date, id}, simpleScheduleRowMapper());
     }
 
 
@@ -291,5 +306,18 @@ public class ScheduleRepositoryImpl {
                     .member(member)
                     .build();
         };
+    }
+
+    private RowMapper<Schedule> simpleScheduleRowMapper() {
+        return (rs, rowNum) -> Schedule.builder()
+                .id(rs.getLong("id"))
+                .title(rs.getString("title"))
+                .author(rs.getString("author"))
+                .password(rs.getString("password"))
+                .description(rs.getString("description"))
+                .createdAt(rs.getDate("created_at"))
+                .updatedAt(rs.getDate("updated_at"))
+                .deletedAt(rs.getDate("deleted_at"))
+                .build();  // build()로 객체를 완성하고 반환
     }
 }

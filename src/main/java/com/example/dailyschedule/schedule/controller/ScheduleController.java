@@ -2,10 +2,7 @@ package com.example.dailyschedule.schedule.controller;
 
 import com.example.dailyschedule.error.CustomException;
 import com.example.dailyschedule.error.type.ErrorCode;
-import com.example.dailyschedule.schedule.dto.DeleteScheduleRequest;
-import com.example.dailyschedule.schedule.dto.ScheduleDto;
-import com.example.dailyschedule.schedule.dto.SearchDto;
-import com.example.dailyschedule.schedule.dto.UpdateScheduleDto;
+import com.example.dailyschedule.schedule.dto.*;
 import com.example.dailyschedule.schedule.service.ScheduleServiceImpl;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +35,22 @@ public class ScheduleController {
             log.error("존재하지 않는 사용자 입니다 : {}", e.getMessage());
             throw new CustomException(ErrorCode.ID_NOT_FOUND);
 
+        }
+    }
+
+
+    // 특정 날짜 필드를 지정하여 일정 조회
+    @GetMapping("/date/{scheduleId}")
+    public ResponseEntity<?> findByScheduleUpdatedDate(
+            @PathVariable Long scheduleId,
+            @RequestParam("field") String field,
+            @RequestParam Date date) {
+        try {
+            SingleDateScheduleDto dateById = scheduleService.findDateById(scheduleId, field, date);
+            return ResponseEntity.status(HttpStatus.OK).body(dateById);
+        } catch (IllegalArgumentException e) {
+            log.error("해당 정보를 찾을 수 없습니다: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
