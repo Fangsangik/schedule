@@ -24,6 +24,7 @@ public class ScheduleController {
         this.scheduleService = scheduleService;
     }
 
+    //스케줄 Id 단건 조회
     @GetMapping("/{scheduleId}")
     public ResponseEntity<?> findById(@PathVariable Long scheduleId) {
 
@@ -36,6 +37,7 @@ public class ScheduleController {
         }
     }
 
+    //수정일과 작성자 명으로 스케줄 조회
     @GetMapping("/search")
     public ResponseEntity<?> findScheduleByUpdatedDateAndAuthor(
             @RequestParam("updatedAt") Date updatedAt,
@@ -49,6 +51,7 @@ public class ScheduleController {
         }
     }
 
+    //해당 날짜 조회
     @GetMapping("/date")
     public ResponseEntity<?> findByUpdatedDate(
             @RequestParam Date updatedAt) {
@@ -62,6 +65,7 @@ public class ScheduleController {
         }
     }
 
+    //내림차순 조회
     @GetMapping("/dateDesc")
     public ResponseEntity<?> findByUpdatedDateDesc() {
         try {
@@ -73,6 +77,7 @@ public class ScheduleController {
         }
     }
 
+    //스케줄 생성
     @PostMapping("/")
     public ResponseEntity<?> createSchedule(@RequestBody ScheduleDto scheduleDto) {
 
@@ -85,6 +90,7 @@ public class ScheduleController {
         }
     }
 
+    //스케줄 update (title, author)
     @PutMapping("/{scheduleId}")
     public ResponseEntity<?> updateSchedule(
             @PathVariable Long scheduleId,
@@ -99,6 +105,7 @@ public class ScheduleController {
     }
 
 
+    //스케줄 삭제
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<?> deleteSchedule(
             @PathVariable Long scheduleId,

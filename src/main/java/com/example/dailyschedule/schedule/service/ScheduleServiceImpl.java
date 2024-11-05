@@ -27,6 +27,7 @@ public class ScheduleServiceImpl {
         this.scheduleValidation = new ScheduleValidation(scheduleRepositoryImpl);
     }
 
+    //스케줄 생성
     @Transactional
     public ScheduleDto create(ScheduleDto scheduleDto) {
         scheduleValidation.validationOfDuplicateId(scheduleDto.getId());
@@ -34,12 +35,14 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(saveSchedule);
     }
 
+    //스케줄 Id 단건 조회
     @Transactional(readOnly = true)
     public ScheduleDto findById(Long id) {
         Schedule existId = scheduleValidation.validateExistId(id);
         return scheduleConverter.toDto(existId);
     }
 
+    //수정일과 작성자 명으로 스케줄 조회
     @Transactional(readOnly = true)
     public List<ScheduleDto> findByUpdatedDateAndAuthor(Date updatedAt, String author) {
         scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author);
@@ -51,6 +54,7 @@ public class ScheduleServiceImpl {
                 .collect(Collectors.toList());
     }
 
+    //내림차순 조회
     @Transactional(readOnly = true)
     public List<ScheduleDto> findByUpdatedDateDesc() {
         List<Schedule> byUpdatedDateByDesc = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc();
@@ -67,6 +71,7 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(updateSchedule);
     }
 
+    //해당 날짜 조회
     @Transactional(readOnly = true)
     public List<ScheduleDto> findByDate(Date date) {
         List<Schedule> findDates = scheduleRepositoryImpl.findByDate(date);
@@ -80,6 +85,7 @@ public class ScheduleServiceImpl {
         return scheduleDtoList;
     }
 
+    //스케줄 update (title, author)
     @Transactional
     public ScheduleDto updateTitleAndAuthor(Long id, UpdatedDtoSchedule updatedDtoSchedule) {
         Schedule existingSchedule = scheduleRepositoryImpl.findScheduleById(id);
@@ -88,6 +94,7 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(updatedSchedule);
     }
 
+    //스케줄 삭제
     @Transactional
     public void deleteById(Long id, String password) {
         Schedule existSchedule = scheduleRepositoryImpl.findScheduleById(id);

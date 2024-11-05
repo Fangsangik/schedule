@@ -19,6 +19,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
+    //스케줄 생성
     public Schedule createSchedule(Schedule schedule) {
 
 
@@ -47,6 +48,7 @@ public class ScheduleRepositoryImpl {
                 .build();
     }
 
+    //스케줄 update
     public Schedule updateSchedule(Schedule schedule) {
         if (schedule.getId() == null) {
             throw new IllegalArgumentException("해당 id가 존재하지 않습니다.");
@@ -80,7 +82,7 @@ public class ScheduleRepositoryImpl {
         }
     }
 
-
+    //스케줄 삭제
     public void deleteScheduleById(Long scheduleId) {
 
         String sql = "delete from schedule where id = ?";
@@ -103,7 +105,7 @@ public class ScheduleRepositoryImpl {
         }
     }
 
-
+    //수정일과 작성자 명으로 스케줄 조회
     public List<Schedule> findSchedulesByUpdatedDateAndAuthor(Date updatedAt, String author) {
         if (updatedAt == null && author == null) {
             throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
@@ -114,13 +116,13 @@ public class ScheduleRepositoryImpl {
         return jdbcTemplate.query(sql, new Object[]{updatedAt, updatedAt, author, author}, scheduleRowMapper());
     }
 
-
+    //내림차순 조회
     public List<Schedule> findAllOrderByUpdatedDateDesc() {
         String sql = "SELECT * FROM schedule ORDER BY updated_at DESC";
         return jdbcTemplate.query(sql, scheduleRowMapper());
     }
 
-
+    //해당 날짜 조회
     public List<Schedule> findByDate(Date date) {
         if (date == null) {
             throw new IllegalArgumentException("해당 날짜가 없습니다.");
@@ -133,6 +135,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
+    //RowMapper
     private RowMapper<Schedule> scheduleRowMapper() {
         return (rs, rowNum) -> Schedule.builder()
                 .id(rs.getLong("id"))

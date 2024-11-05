@@ -5,7 +5,6 @@ import com.example.dailyschedule.schedule.entity.Schedule;
 import com.example.dailyschedule.schedule.repository.ScheduleRepositoryImpl;
 
 import java.sql.Date;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class ScheduleValidation {
