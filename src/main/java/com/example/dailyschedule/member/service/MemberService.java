@@ -65,7 +65,7 @@ public class MemberService {
     @Transactional
     public MemberDto updateMember(Long memberId, MemberDto memberDto) {
         Member existMember = memberValidation.validateExistId(memberId);
-        memberValidation.validatePassword(existMember, memberDto);
+        memberValidation.validatePassword(existMember, memberDto.getPassword());
 
         existMember = existMember.toBuilder()
                 .userId(memberDto.getUserId())
