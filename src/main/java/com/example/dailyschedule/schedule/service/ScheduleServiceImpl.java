@@ -8,19 +8,21 @@ import com.example.dailyschedule.member.entity.Member;
 import com.example.dailyschedule.member.repository.MemberRepository;
 import com.example.dailyschedule.member.service.MemberService;
 import com.example.dailyschedule.schedule.converter.ScheduleConverter;
-import com.example.dailyschedule.schedule.dto.CombinedScheduleDto;
 import com.example.dailyschedule.schedule.dto.SearchDto;
+import com.example.dailyschedule.schedule.dto.UpdateScheduleDto;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.example.dailyschedule.schedule.repository.ScheduleRepositoryImpl;
 import com.example.dailyschedule.schedule.validation.ScheduleValidation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.sql.Date;
 
 
+@Slf4j
 @Service
 public class ScheduleServiceImpl {
 
@@ -41,14 +43,19 @@ public class ScheduleServiceImpl {
 
     @Transactional
     public ScheduleDto create(MemberDto memberDto, ScheduleDto scheduleDto) {
+        if (memberDto == null || memberDto.getId() == null) {
+            log.error("잘못된 회원 정보입니다. MemberDto: {}", memberDto);
+            throw new CustomException(ErrorCode.INVALID_MEMBER_INFO);
+        }
+
         // MemberService를 통해 Member 정보 가져오기
-        Member member = memberConverter.toEntity(memberService.findByUserId(memberDto.getUserId()));
+        Member member = memberConverter.toEntity(memberService.findById(memberDto.getId()));
 
         // 중복 ID 검증
         scheduleValidation.validationOfDuplicateId(scheduleDto.getId());
 
         // Member 객체를 함께 전달하여 Schedule 생성
-        Schedule saveSchedule = scheduleRepositoryImpl.createSchedule(scheduleConverter.toEntity(scheduleDto), member);
+        Schedule saveSchedule = scheduleRepositoryImpl.createSchedule(scheduleConverter.toEntityIncludeMember(scheduleDto, member), member);
 
         // ScheduleDto 반환
         return scheduleConverter.toDto(saveSchedule);
@@ -57,7 +64,7 @@ public class ScheduleServiceImpl {
     @Transactional
     public ScheduleDto update(MemberDto memberDto, ScheduleDto scheduleDto) {
         Member member = memberConverter.toEntity(memberService.findByUserId(memberDto.getUserId()));
-        Schedule updateSchedule = scheduleRepositoryImpl.updateSchedule(member, scheduleConverter.toEntity(scheduleDto));
+        Schedule updateSchedule = scheduleRepositoryImpl.updateSchedule(member, scheduleConverter.toEntityIncludeMember(scheduleDto, member));
         return scheduleConverter.toDto(updateSchedule);
     }
 
@@ -68,7 +75,7 @@ public class ScheduleServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    public Page<ScheduleDto> findByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author, SearchDto searchDto) {
+    public Page<ScheduleDto> findByUpdatedDateAndAuthor(Date updatedAt, String author, SearchDto searchDto) {
         scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author, searchDto);
 
         // 모든 결과를 리스트 형태로 반환
@@ -88,7 +95,7 @@ public class ScheduleServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    public Page<ScheduleDto> findByDate(LocalDateTime date, SearchDto searchDto) {
+    public Page<ScheduleDto> findByDate(Date date, SearchDto searchDto) {
         Page<Schedule> findDates = scheduleRepositoryImpl.findByDate(date, searchDto);
         if (findDates.isEmpty()) {
             throw new CustomException(ErrorCode.NOT_FOUND);
@@ -99,16 +106,13 @@ public class ScheduleServiceImpl {
 
     //Lv2
     @Transactional
-    public ScheduleDto updateTitleAndAuthor(Long scheduleId, CombinedScheduleDto combinedScheduleDto) {
-        Member member = memberConverter.toEntity(memberService.findByUserId(combinedScheduleDto.getMemberDto().getUserId()));
+    public ScheduleDto updateTitleAndAuthor(Long scheduleId, UpdateScheduleDto updateScheduleDto) {
+        // 기존 일정 조회
         Schedule existingSchedule = scheduleRepositoryImpl.findScheduleById(scheduleId);
-
-        // validateAndPrepareUpdatedSchedule에서 업데이트된 Schedule을 반환받아 저장
-        Schedule updatedSchedule = scheduleValidation.validateAndPrepareUpdatedSchedule(combinedScheduleDto, existingSchedule);
-
+        // 변경 사항을 포함한 새로운 Schedule 생성
+        Schedule updatedSchedule = scheduleValidation.validateAndPrepareUpdatedSchedule(updateScheduleDto, existingSchedule);
         // 업데이트된 스케줄을 저장소에 반영
-        scheduleRepositoryImpl.updateSchedule(member, updatedSchedule);
-
+        scheduleRepositoryImpl.updateSchedule(existingSchedule.getMember(), updatedSchedule);
         // DTO로 변환하여 반환
         return scheduleConverter.toDto(updatedSchedule);
     }
