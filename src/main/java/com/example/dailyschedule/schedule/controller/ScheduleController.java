@@ -1,11 +1,10 @@
 package com.example.dailyschedule.schedule.controller;
 
-import com.example.dailyschedule.schedule.dto.CombinedScheduleDto;
 import com.example.dailyschedule.schedule.dto.DeleteScheduleRequest;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
+import com.example.dailyschedule.schedule.dto.UpdatedDtoSchedule;
 import com.example.dailyschedule.schedule.service.ScheduleServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -89,9 +88,9 @@ public class ScheduleController {
     @PutMapping("/{scheduleId}")
     public ResponseEntity<?> updateSchedule(
             @PathVariable Long scheduleId,
-            @RequestBody CombinedScheduleDto combinedScheduleDto) {
+            @RequestBody UpdatedDtoSchedule updatedDtoSchedule) {
         try {
-            ScheduleDto updatedSchedules = scheduleService.updateTitleAndAuthor(scheduleId, combinedScheduleDto);
+            ScheduleDto updatedSchedules = scheduleService.updateTitleAndAuthor(scheduleId, updatedDtoSchedule);
             return ResponseEntity.status(HttpStatus.OK).body(updatedSchedules);
         } catch (IllegalArgumentException e) {
             log.error("일정을 수정하는데 실패했습니다. : {} ", e.getMessage());

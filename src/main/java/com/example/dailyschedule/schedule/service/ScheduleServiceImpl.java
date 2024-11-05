@@ -1,7 +1,7 @@
 package com.example.dailyschedule.schedule.service;
 
 import com.example.dailyschedule.schedule.converter.ScheduleConverter;
-import com.example.dailyschedule.schedule.dto.CombinedScheduleDto;
+import com.example.dailyschedule.schedule.dto.UpdatedDtoSchedule;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.example.dailyschedule.schedule.repository.ScheduleRepositoryImpl;
@@ -81,9 +81,9 @@ public class ScheduleServiceImpl {
     }
 
     @Transactional
-    public ScheduleDto updateTitleAndAuthor(Long id, CombinedScheduleDto combinedScheduleDto) {
+    public ScheduleDto updateTitleAndAuthor(Long id, UpdatedDtoSchedule updatedDtoSchedule) {
         Schedule existingSchedule = scheduleRepositoryImpl.findScheduleById(id);
-        Schedule updatedSchedule = scheduleValidation.validateAndPrepareUpdatedSchedule(combinedScheduleDto, existingSchedule);
+        Schedule updatedSchedule = scheduleValidation.validateAndPrepareUpdatedSchedule(updatedDtoSchedule, existingSchedule);
         scheduleRepositoryImpl.updateSchedule(updatedSchedule);
         return scheduleConverter.toDto(updatedSchedule);
     }
