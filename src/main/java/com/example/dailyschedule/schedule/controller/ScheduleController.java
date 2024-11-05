@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.sql.Date;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,7 +39,7 @@ public class ScheduleController {
 
     @GetMapping("/search")
     public ResponseEntity<?> findScheduleByUpdatedDateAndAuthor(
-            @RequestParam("updatedAt") @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime updatedAt,
+            @RequestParam("updatedAt") Date updatedAt,
             @RequestParam("author") String author) {
         try {
             List<ScheduleDto> findSchedules = scheduleService.findByUpdatedDateAndAuthor(updatedAt, author);
@@ -52,7 +52,7 @@ public class ScheduleController {
 
     @GetMapping("/date")
     public ResponseEntity<?> findByUpdatedDate(
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime updatedAt) {
+            @RequestParam Date updatedAt) {
         try {
             List<ScheduleDto> findDate = scheduleService.findByDate(updatedAt);
             return ResponseEntity.ok(findDate);

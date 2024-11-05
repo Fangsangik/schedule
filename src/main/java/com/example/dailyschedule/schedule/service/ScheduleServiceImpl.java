@@ -9,7 +9,7 @@ import com.example.dailyschedule.schedule.validation.ScheduleValidation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.sql.Date;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,7 +41,7 @@ public class ScheduleServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    public List<ScheduleDto> findByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author) {
+    public List<ScheduleDto> findByUpdatedDateAndAuthor(Date updatedAt, String author) {
         scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author);
 
         // 모든 결과를 리스트 형태로 반환
@@ -68,7 +68,7 @@ public class ScheduleServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    public List<ScheduleDto> findByDate(LocalDateTime date) {
+    public List<ScheduleDto> findByDate(Date date) {
         List<Schedule> findDates = scheduleRepositoryImpl.findByDate(date);
         if (findDates.isEmpty()) {
             throw new IllegalArgumentException("해당 날짜에 대한 값이 존재하지 않습니다.");

@@ -6,7 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.sql.Date;
 import java.util.List;
 
 @Repository
@@ -30,7 +30,7 @@ public class ScheduleRepositoryImpl {
                 schedule.getCreatedAt(),
                 schedule.getPassword(),
                 schedule.getDescription(),
-                schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now(),
+                schedule.getUpdatedAt(),
                 schedule.getDeletedAt()
         );
         //최근 추가된 ID 조회
@@ -42,7 +42,7 @@ public class ScheduleRepositoryImpl {
                 .password(schedule.getPassword())
                 .description(schedule.getDescription())
                 .createdAt(schedule.getCreatedAt())  // DTO에서 설정된 createdAt 사용
-                .updatedAt(schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now())  // DTO에서 설정된 updatedAt 사용 없으면 현재 시간 반영
+                .updatedAt(schedule.getUpdatedAt())  // DTO에서 설정된 updatedAt 사용 없으면 현재 시간 반영
                 .deletedAt(schedule.getDeletedAt())
                 .build();
     }
@@ -104,7 +104,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    public List<Schedule> findSchedulesByUpdatedDateAndAuthor(LocalDateTime updatedAt, String author) {
+    public List<Schedule> findSchedulesByUpdatedDateAndAuthor(Date updatedAt, String author) {
         if (updatedAt == null && author == null) {
             throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
         }
@@ -121,7 +121,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    public List<Schedule> findByDate(LocalDateTime date) {
+    public List<Schedule> findByDate(Date date) {
         if (date == null) {
             throw new IllegalArgumentException("해당 날짜가 없습니다.");
         }
@@ -140,9 +140,9 @@ public class ScheduleRepositoryImpl {
                 .title(rs.getString("title"))
                 .password(rs.getString("password"))
                 .description(rs.getString("description"))
-                .createdAt(rs.getObject("created_at", LocalDateTime.class))
-                .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
-                .deletedAt(rs.getObject("deleted_at", LocalDateTime.class))
+                .createdAt(rs.getDate("created_at"))
+                .updatedAt(rs.getDate("updated_at"))
+                .deletedAt(rs.getDate("deleted_at"))
                 .build();
     }
 
