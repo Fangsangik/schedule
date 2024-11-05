@@ -1,15 +1,12 @@
 package com.example.dailyschedule.member.repository;
 
 import com.example.dailyschedule.error.CustomException;
-import com.example.dailyschedule.error.type.ErrorCode;
 import com.example.dailyschedule.member.entity.Member;
-import com.example.dailyschedule.schedule.entity.Schedule;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.example.dailyschedule.error.type.ErrorCode.*;
@@ -56,7 +53,7 @@ public class MemberRepository {
                             .password(rs.getString("password"))
                             .name(rs.getString("name"))
                             .email(rs.getString("email"))
-                            .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
+                            .updatedAt(rs.getDate("updated_at"))
                             .build()
             );
         } catch (EmptyResultDataAccessException e) {
@@ -130,7 +127,7 @@ public class MemberRepository {
                 .userId(rs.getString("user_id"))
                 .email(rs.getString("email"))
                 .password(rs.getString("password"))
-                .updatedAt(rs.getObject("updated_at", LocalDateTime.class))
+                .updatedAt(rs.getDate("updated_at"))
                 .build();
     }
 
