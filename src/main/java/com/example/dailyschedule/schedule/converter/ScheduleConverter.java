@@ -1,7 +1,6 @@
 package com.example.dailyschedule.schedule.converter;
 
 import com.example.dailyschedule.member.converter.MemberConverter;
-import com.example.dailyschedule.member.dto.MemberDto;
 import com.example.dailyschedule.member.entity.Member;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
