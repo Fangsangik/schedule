@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Date;
+import java.util.Collections;
 import java.util.List;
 
 @Repository
@@ -131,20 +132,27 @@ public class ScheduleRepositoryImpl {
         int limit = searchDto.getLimit();
         int offset = searchDto.getOffset();
 
-        String sql = """
-                    SELECT s.*, 
-                           m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
-                           m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
-                      FROM schedule s
-                      LEFT JOIN member m ON s.member_id = m.id
-                     ORDER BY s.updated_at DESC
-                     LIMIT ? OFFSET ?
-                """;
+        // 전체 레코드 수를 계산하는 쿼리
+        String countSql = "SELECT COUNT(*) FROM schedule";
+        Long totalCount = jdbcTemplate.queryForObject(countSql, Long.class);
 
+        if (totalCount == 0 || offset >= totalCount) {
+            return new PageImpl<>(Collections.emptyList(), PageRequest.of(offset / limit, limit), totalCount);
+        }
+
+        String sql = """
+                SELECT s.*, 
+                       m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                       m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+                  FROM schedule s
+                  LEFT JOIN member m ON s.member_id = m.id
+                 ORDER BY s.updated_at DESC
+                 LIMIT ? OFFSET ?
+            """;
 
         List<Schedule> schedules = jdbcTemplate.query(sql, new Object[]{limit, offset}, scheduleRowMapper());
 
-        return new PageImpl<>(schedules, PageRequest.of(offset / limit, limit), schedules.size());
+        return new PageImpl<>(schedules, PageRequest.of(offset / limit, limit), totalCount);
     }
 
 
@@ -156,23 +164,38 @@ public class ScheduleRepositoryImpl {
         int limit = searchDto.getLimit();
         int offset = searchDto.getOffset();
 
+        // 전체 레코드 수를 먼저 조회하여 페이지가 범위를 넘는지 확인
+        String countSql = """
+            SELECT COUNT(*)
+              FROM schedule s
+              LEFT JOIN member m ON s.member_id = m.id
+              WHERE DATE(s.updated_at) = DATE(?) 
+                AND s.author = ?
+            """;
+
+        int total = jdbcTemplate.queryForObject(countSql, new Object[]{updatedAt, author}, Integer.class);
+
+        if (total == 0 || offset >= total) {
+            return new PageImpl<>(Collections.emptyList(), PageRequest.of(offset / limit, limit), total);
+        }
+
         String sql = """
-                    SELECT s.*, 
-                           m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
-                           m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
-                      FROM schedule s
-                      LEFT JOIN member m ON s.member_id = m.id
-                      WHERE DATE(s.updated_at) = DATE(?) 
-                       AND s.author = ?
-                     ORDER BY s.updated_at DESC 
-                     LIMIT ? OFFSET ?
-                """;
+            SELECT s.*, 
+                   m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                   m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+              FROM schedule s
+              LEFT JOIN member m ON s.member_id = m.id
+              WHERE DATE(s.updated_at) = DATE(?) 
+                AND s.author = ?
+             ORDER BY s.updated_at DESC 
+             LIMIT ? OFFSET ?
+        """;
 
         List<Schedule> schedules = jdbcTemplate.query(sql,
                 new Object[]{updatedAt, author, limit, offset},
                 scheduleRowMapper());
 
-        return new PageImpl<>(schedules, PageRequest.of(offset / limit, limit), schedules.size());
+        return new PageImpl<>(schedules, PageRequest.of(offset / limit, limit), total);
     }
 
     //선텍 일정 조회
@@ -207,26 +230,30 @@ public class ScheduleRepositoryImpl {
             throw new IllegalArgumentException("offset 값이 음수가 될 수 없습니다.");
         }
 
-        // 쿼리문: 조인 및 필터링 조건 추가
+        // 전체 개수 계산 쿼리
+        String countSql = """
+                SELECT COUNT(*) FROM schedule s
+                 WHERE s.created_at = ? OR s.updated_at = ? OR s.deleted_at = ?
+            """;
+        Long totalCount = jdbcTemplate.queryForObject(countSql, new Object[]{date, date, date}, Long.class);
+
+        if (totalCount == 0 || offset >= totalCount) {
+            return new PageImpl<>(Collections.emptyList(), PageRequest.of(offset / limit, limit), totalCount);
+        }
+
+        // 데이터 조회 쿼리
         String sql = """
-                    SELECT s.*, 
-                           m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
-                           m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
-                      FROM schedule s
-                      LEFT JOIN member m ON s.member_id = m.id
-                     WHERE s.created_at = ? OR s.updated_at = ? OR s.deleted_at = ?
-                     LIMIT ? OFFSET ?
-                """;
+                SELECT s.*, 
+                       m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                       m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+                  FROM schedule s
+                  LEFT JOIN member m ON s.member_id = m.id
+                 WHERE s.created_at = ? OR s.updated_at = ? OR s.deleted_at = ?
+                 LIMIT ? OFFSET ?
+            """;
 
         List<Schedule> schedules = jdbcTemplate.query(
                 sql, new Object[]{date, date, date, limit, offset}, scheduleRowMapper());
-
-        // 전체 개수 계산 쿼리
-        String countSql = """
-                    SELECT COUNT(*) FROM schedule s
-                     WHERE s.created_at = ? OR s.updated_at = ? OR s.deleted_at = ?
-                """;
-        Long totalCount = jdbcTemplate.queryForObject(countSql, new Object[]{date, date, date}, Long.class);
 
         PageRequest pageRequest = PageRequest.of(offset / limit, limit);
         return new PageImpl<>(schedules, pageRequest, totalCount);
@@ -241,21 +268,34 @@ public class ScheduleRepositoryImpl {
         int limit = searchDto.getLimit();
         int offset = searchDto.getOffset();
 
-        String sql = """
-                    SELECT s.*, 
-                           m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
-                           m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
-                      FROM schedule s
-                      LEFT JOIN member m ON s.member_id = m.id
-                     WHERE m.id = ?
-                     LIMIT ? OFFSET ?
-                """;
+        if (limit <= 0) {
+            throw new IllegalArgumentException("limit 값이 0보다 커야 합니다.");
+        }
+        if (offset < 0) {
+            throw new IllegalArgumentException("offset 값이 음수가 될 수 없습니다.");
+        }
 
-        List<Schedule> schedules = jdbcTemplate.query(sql, new Object[]{memberId, limit, offset}, scheduleRowMapper());
-
-        // 전체 일정 개수를 계산하는 쿼리
+        // 전체 일정 개수 쿼리
         String countSql = "SELECT COUNT(*) FROM schedule WHERE member_id = ?";
         Long totalCount = jdbcTemplate.queryForObject(countSql, new Object[]{memberId}, Long.class);
+
+        // 빈 페이지 반환 조건
+        if (totalCount == 0 || offset >= totalCount) {
+            return new PageImpl<>(Collections.emptyList(), PageRequest.of(offset / limit, limit), totalCount);
+        }
+
+        // 데이터 조회 쿼리
+        String sql = """
+                SELECT s.*, 
+                       m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                       m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+                  FROM schedule s
+                  LEFT JOIN member m ON s.member_id = m.id
+                 WHERE m.id = ?
+                 LIMIT ? OFFSET ?
+            """;
+
+        List<Schedule> schedules = jdbcTemplate.query(sql, new Object[]{memberId, limit, offset}, scheduleRowMapper());
 
         PageRequest pageRequest = PageRequest.of(offset / limit, limit);
         return new PageImpl<>(schedules, pageRequest, totalCount);
