@@ -1,12 +1,11 @@
 package com.example.dailyschedule.member.entity;
 
-import com.example.dailyschedule.member.dto.MemberDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.sql.Date;
 
 @Getter
 @NoArgsConstructor
@@ -18,5 +17,5 @@ public class Member {
     private String password;
     private String name;
     private String email;
-    private LocalDateTime updatedAt;
+    private Date updatedAt;
 }

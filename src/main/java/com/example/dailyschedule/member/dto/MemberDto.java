@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.sql.Date;
 
 @Getter
 @NoArgsConstructor
@@ -17,5 +17,5 @@ public class MemberDto {
     private String password;
     private String name;
     private String email;
-    private LocalDateTime updatedAt;
+    private Date updatedAt;
 }
