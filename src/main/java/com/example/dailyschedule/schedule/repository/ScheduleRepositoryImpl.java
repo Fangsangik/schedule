@@ -12,7 +12,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Date;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,7 +25,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    // 생성
+    // userId 제거
     public Schedule createSchedule(Schedule schedule, Member member) {
 
         String sql = "INSERT INTO schedule (author, title, created_at, password, description, updated_at, deleted_at, member_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
@@ -37,7 +36,7 @@ public class ScheduleRepositoryImpl {
                 schedule.getCreatedAt(),
                 schedule.getPassword(),
                 schedule.getDescription(),
-                schedule.getUpdatedAt() != null ? schedule.getUpdatedAt() : LocalDateTime.now(),
+                schedule.getUpdatedAt(),
                 schedule.getDeletedAt(),
                 member.getId() // Member 객체에서 member_id를 가져옴
         );
@@ -58,7 +57,6 @@ public class ScheduleRepositoryImpl {
                 .build();
     }
 
-    //update
     public Schedule updateSchedule(Member member, Schedule schedule) {
         if (schedule.getId() == null) {
             throw new IllegalArgumentException("해당 id가 존재하지 않습니다.");
@@ -84,7 +82,6 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    //id로 조회
     public Schedule findScheduleById(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("Id 값이 null 입니다");
@@ -107,7 +104,6 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    //스케줄 삭제
     public void deleteScheduleById(Long scheduleId) {
 
         String sql = "delete from schedule where id = ?";
@@ -131,30 +127,35 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    //paging 처리 한 내림 차순 조회
     public Page<Schedule> findAllOrderByUpdatedDateDesc(SearchDto searchDto) {
 
         int limit = searchDto.getLimit();
         int offset = searchDto.getOffset();
 
-        String sql = """
-                    SELECT s.*, 
-                           m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
-                           m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
-                      FROM schedule s
-                      LEFT JOIN member m ON s.member_id = m.id
-                     ORDER BY s.updated_at DESC
-                     LIMIT ? OFFSET ?
-                """;
+        // 전체 레코드 수를 계산하는 쿼리
+        String countSql = "SELECT COUNT(*) FROM schedule";
+        Long totalCount = jdbcTemplate.queryForObject(countSql, Long.class);
 
+        if (totalCount == 0 || offset >= totalCount) {
+            return new PageImpl<>(Collections.emptyList(), PageRequest.of(offset / limit, limit), totalCount);
+        }
+
+        String sql = """
+                SELECT s.*, 
+                       m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                       m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+                  FROM schedule s
+                  LEFT JOIN member m ON s.member_id = m.id
+                 ORDER BY s.updated_at DESC
+                 LIMIT ? OFFSET ?
+            """;
 
         List<Schedule> schedules = jdbcTemplate.query(sql, new Object[]{limit, offset}, scheduleRowMapper());
 
-        return new PageImpl<>(schedules, PageRequest.of(offset / limit, limit), schedules.size());
+        return new PageImpl<>(schedules, PageRequest.of(offset / limit, limit), totalCount);
     }
 
 
-    //paging 처리한 UpdateDateAuthor
     public Page<Schedule> findSchedulesByUpdatedDateAndAuthor(Date updatedAt, String author, SearchDto searchDto) {
         if (updatedAt == null && author == null) {
             throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
@@ -178,28 +179,42 @@ public class ScheduleRepositoryImpl {
             return new PageImpl<>(Collections.emptyList(), PageRequest.of(offset / limit, limit), total);
         }
 
-
         String sql = """
-                SELECT s.*, 
-                       m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
-                       m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
-                  FROM schedule s
-                  LEFT JOIN member m ON s.member_id = m.id
-                  WHERE DATE(s.updated_at) = DATE(?) 
-                   AND s.author = ?
-                 ORDER BY s.updated_at DESC 
-                 LIMIT ? OFFSET ?
-            """;
+            SELECT s.*, 
+                   m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+                   m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+              FROM schedule s
+              LEFT JOIN member m ON s.member_id = m.id
+              WHERE DATE(s.updated_at) = DATE(?) 
+                AND s.author = ?
+             ORDER BY s.updated_at DESC 
+             LIMIT ? OFFSET ?
+        """;
 
         List<Schedule> schedules = jdbcTemplate.query(sql,
                 new Object[]{updatedAt, author, limit, offset},
                 scheduleRowMapper());
 
-        return new PageImpl<>(schedules, PageRequest.of(offset / limit, limit), schedules.size());
+        return new PageImpl<>(schedules, PageRequest.of(offset / limit, limit), total);
+    }
+
+    //선텍 일정 조회
+    public Schedule findDateById(Long id, String field, Date date) {
+        if (date == null) {
+            throw new IllegalArgumentException("해당 날짜가 없습니다.");
+        }
+
+        if (!field.equals("created_at") && !field.equals("updated_at") && !field.equals("deleted_at")) {
+            throw new IllegalArgumentException("유요하지 않은 필드 이름입니다");
+        }
+
+        String sql = String.format("select * from schedule where %s = ? and id = ?", field);
+
+        // query 메서드를 사용하여 다수의 결과를 리스트로 반환
+        return jdbcTemplate.queryForObject(sql, new Object[]{date, id}, simpleScheduleRowMapper());
     }
 
 
-    //날짜 Paging 조회
     public Page<Schedule> findByDate(Date date, SearchDto searchDto) {
         if (date == null) {
             throw new IllegalArgumentException("해당 날짜가 없습니다.");
@@ -244,7 +259,7 @@ public class ScheduleRepositoryImpl {
         return new PageImpl<>(schedules, pageRequest, totalCount);
     }
 
-    //paging 처리 스케줄id & memberId 동시 조회
+
     public Page<Schedule> findSchedulesByMemberId(Long memberId, SearchDto searchDto) {
         if (memberId == null) {
             throw new IllegalArgumentException("해당 회원 아이디가 존재하지 않습니다.");
@@ -303,22 +318,6 @@ public class ScheduleRepositoryImpl {
         }
     }
 
-    //선텍 일정 조회
-    public Schedule findDateById(Long id, String field, Date date) {
-        if (date == null) {
-            throw new IllegalArgumentException("해당 날짜가 없습니다.");
-        }
-
-        if (!field.equals("created_at") && !field.equals("updated_at") && !field.equals("deleted_at")) {
-            throw new IllegalArgumentException("유요하지 않은 필드 이름입니다");
-        }
-
-        String sql = String.format("select * from schedule where %s = ? and id = ?", field);
-
-        // query 메서드를 사용하여 다수의 결과를 리스트로 반환
-        return jdbcTemplate.queryForObject(sql, new Object[]{date, id}, scheduleRowMapper());
-    }
-
     private RowMapper<Schedule> scheduleRowMapper() {
         return (rs, rowNum) -> {
             // Member 정보 매핑
@@ -347,5 +346,18 @@ public class ScheduleRepositoryImpl {
                     .member(member)
                     .build();
         };
+    }
+
+    private RowMapper<Schedule> simpleScheduleRowMapper() {
+        return (rs, rowNum) -> Schedule.builder()
+                .id(rs.getLong("id"))
+                .title(rs.getString("title"))
+                .author(rs.getString("author"))
+                .password(rs.getString("password"))
+                .description(rs.getString("description"))
+                .createdAt(rs.getDate("created_at"))
+                .updatedAt(rs.getDate("updated_at"))
+                .deletedAt(rs.getDate("deleted_at"))
+                .build();  // build()로 객체를 완성하고 반환
     }
 }
