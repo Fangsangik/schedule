@@ -82,3 +82,9 @@ GROUP BY user_id
 HAVING COUNT(*) > 1;
 
 ALTER TABLE member ADD CONSTRAINT unique_user_id UNIQUE (user_id);
+
+SHOW INDEX FROM member WHERE Non_unique = 0 AND Column_name = 'user_id';
+ALTER TABLE member DROP INDEX unique_user_id;
+SHOW INDEX FROM member;
+desc schedule;
+desc member;
