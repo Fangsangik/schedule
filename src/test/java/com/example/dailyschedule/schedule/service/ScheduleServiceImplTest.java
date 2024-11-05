@@ -5,16 +5,14 @@ import com.example.dailyschedule.member.dto.MemberDto;
 import com.example.dailyschedule.member.entity.Member;
 import com.example.dailyschedule.member.repository.MemberRepository;
 import com.example.dailyschedule.member.service.MemberService;
-import com.example.dailyschedule.schedule.dto.CombinedScheduleDto;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
-import com.example.dailyschedule.schedule.service.ScheduleServiceImpl;
+import com.example.dailyschedule.schedule.dto.UpdateScheduleDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.sql.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,8 +54,8 @@ class ScheduleServiceImplTest {
                 .title("test title")
                 .description("test description")
                 .author("test author")
-                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .createdAt(new Date(System.currentTimeMillis()))
+                .updatedAt(new Date(System.currentTimeMillis()))
                 .password("TestPassword")
                 .memberDto(memberDto)
                 .build();
@@ -93,8 +91,8 @@ class ScheduleServiceImplTest {
                 .title("test title")
                 .description("test description")
                 .author("test author")
-                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .createdAt(new Date(System.currentTimeMillis()))
+                .updatedAt(new Date(System.currentTimeMillis()))
                 .password("TestPassword")
                 .memberDto(memberDto)
                 .build();
@@ -126,8 +124,8 @@ class ScheduleServiceImplTest {
                 .title("test title")
                 .description("test description")
                 .author("test author")
-                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .createdAt(new Date(System.currentTimeMillis()))
+                .updatedAt(new Date(System.currentTimeMillis()))
                 .password("TestPassword")
                 .memberDto(memberDto)
                 .build();
@@ -141,7 +139,7 @@ class ScheduleServiceImplTest {
                 .description("updated description")
                 .author("updated author")
                 .createdAt(schedule.getCreatedAt())
-                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .updatedAt(new Date(System.currentTimeMillis()))
                 .password("updated password")
                 .build();
 
@@ -173,8 +171,8 @@ class ScheduleServiceImplTest {
                 .title("test title")
                 .description("test description")
                 .author("test author")
-                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .createdAt(new Date(System.currentTimeMillis()))
+                .updatedAt(new Date(System.currentTimeMillis()))
                 .password("TestPassword")
                 .memberDto(memberDto)
                 .build();
@@ -209,8 +207,8 @@ class ScheduleServiceImplTest {
                 .title("First Test Title")
                 .description("First Test Description")
                 .author("Author1")
-                .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
-                .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))
+                .createdAt(new Date(2024, 07, 01))
+                .updatedAt(new Date(2024, 07, 10))
                 .password("password1")
                 .build();
 
@@ -218,8 +216,8 @@ class ScheduleServiceImplTest {
                 .title("Second Test Title")
                 .description("Second Test Description")
                 .author("Author2")
-                .createdAt(LocalDateTime.of(2024, 06, 01, 00, 00))
-                .updatedAt(LocalDateTime.of(2024, 07, 05, 00, 00))
+                .createdAt(new Date(2024, 06, 01))
+                .updatedAt(new Date(2024, 07, 05))
                 .password("password2")
                 .build();
 
@@ -230,8 +228,8 @@ class ScheduleServiceImplTest {
         List<ScheduleDto> scheduleDtoList = scheduleService.findByUpdatedDateDesc();
         assertFalse(scheduleDtoList.isEmpty());
         assertThat(scheduleDtoList.size()).isEqualTo(2);
-        assertThat(scheduleDtoList.get(0).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 10, 00, 00));
-        assertThat(scheduleDtoList.get(1).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 05, 00, 00));
+        assertThat(scheduleDtoList.get(0).getUpdatedAt()).isEqualTo(new Date(2024, 07, 10));
+        assertThat(scheduleDtoList.get(1).getUpdatedAt()).isEqualTo(new Date(2024, 07, 05));
     }
 
     @Test
@@ -253,8 +251,8 @@ class ScheduleServiceImplTest {
                 .title("Original Test Title")
                 .description("Original Test Description")
                 .author("Original Author")
-                .createdAt(LocalDateTime.of(2024, 7, 1, 0, 0))
-                .updatedAt(LocalDateTime.of(2024, 7, 10, 0, 0))
+                .createdAt(new Date(2024, 7, 1))
+                .updatedAt(new Date(2024, 7, 10))
                 .password("password1")
                 .memberDto(memberDto)
                 .build();
@@ -262,26 +260,18 @@ class ScheduleServiceImplTest {
         // 일정 생성 및 생성된 일정의 ID 확인
         ScheduleDto createdSchedule = scheduleService.create(createdMember, schedule1);
 
-        // 업데이트할 제목과 작성자 설정
-        ScheduleDto updatedScheduleInfo = ScheduleDto.builder()
-                .id(createdSchedule.getId())
-                .title("Updated Test Title")
-                .author("Updated Author")
+        UpdateScheduleDto updatedDto = UpdateScheduleDto.builder()
+                .title("updated") // 업데이트할 정보 반영
+                .author("updatedAuthor")
                 .password("password1")
-                .updatedAt(LocalDateTime.of(2024, 7, 10, 0, 0)) // 동일한 날짜 사용
-                .build();
-
-        CombinedScheduleDto combinedScheduleDto = CombinedScheduleDto.builder()
-                .scheduleDto(updatedScheduleInfo) // 업데이트할 정보 반영
-                .memberDto(createdMember)
                 .build();
 
         // 제목과 작성자명 업데이트
-        ScheduleDto updatedSchedule = scheduleService.updateTitleAndAuthor(createdSchedule.getId(), combinedScheduleDto);
+        ScheduleDto updatedSchedule = scheduleService.updateTitleAndAuthor(createdSchedule.getId(), updatedDto);
 
         // 업데이트된 제목과 작성자를 검증
-        assertThat(updatedSchedule.getTitle()).isEqualTo("Updated Test Title");
-        assertThat(updatedSchedule.getAuthor()).isEqualTo("Updated Author");
+        assertThat(updatedSchedule.getTitle()).isEqualTo("updated");
+        assertThat(updatedSchedule.getAuthor()).isEqualTo("updatedAuthor");
     }
 
     @Test
@@ -303,8 +293,8 @@ class ScheduleServiceImplTest {
                 .title("Original Test Title")
                 .description("Original Test Description")
                 .author("Original Author")
-                .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
-                .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))
+                .createdAt(new Date(2024, 07, 01))
+                .updatedAt(new Date(2024, 07, 10))
                 .password("password1")
                 .memberDto(memberDto)
                 .build();
@@ -314,7 +304,7 @@ class ScheduleServiceImplTest {
 
         List<ScheduleDto> createdAtDate = scheduleService.findByDate(scheduleDto1.getCreatedAt());
         assertNotNull(createdAtDate);
-        assertThat(createdAtDate.get(0).getCreatedAt()).isEqualTo("2024-07-01T00:00");
+        assertThat(createdAtDate.get(0).getCreatedAt()).isEqualTo(scheduleDto1.getCreatedAt());
 
     }
 
@@ -337,15 +327,15 @@ class ScheduleServiceImplTest {
                 .title("Original Test Title")
                 .description("Original Test Description")
                 .author("Original Author")
-                .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
-                .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))
+                .createdAt(new Date(2024, 07, 01))
+                .updatedAt(new Date(2024, 07, 10))
                 .password("password1")
                 .memberDto(memberDto)
                 .build();
 
         ScheduleDto cratedSchedule = scheduleService.create(memberConverter.toDto(createdMember), schedule1);
         List<ScheduleDto> findSchedule = scheduleService.findByUpdatedDateAndAuthor(schedule1.getUpdatedAt(), cratedSchedule.getAuthor());
-        assertThat(findSchedule.get(0).getUpdatedAt()).isEqualTo("2024-07-10T00:00");
+        assertThat(findSchedule.get(0).getUpdatedAt()).isEqualTo(cratedSchedule.getUpdatedAt());
         assertThat(findSchedule.get(0).getTitle()).isEqualTo("Original Test Title");
     }
 
@@ -368,8 +358,8 @@ class ScheduleServiceImplTest {
                 .title("Original Test Title 1")
                 .description("Original Test Description")
                 .author("Original Author")
-                .createdAt(LocalDateTime.of(2024, 7, 1, 0, 0))
-                .updatedAt(LocalDateTime.of(2024, 7, 10, 0, 0))
+                .createdAt(new Date(2024, 07, 01))
+                .updatedAt(new Date(2024, 07, 10))
                 .password("password1")
                 .memberDto(memberDto)
                 .build();
@@ -380,8 +370,8 @@ class ScheduleServiceImplTest {
                 .title("Original Test Title 2")
                 .description("Original Test Description")
                 .author("Original Author")
-                .createdAt(LocalDateTime.of(2024, 7, 1, 0, 0))
-                .updatedAt(LocalDateTime.of(2024, 10, 11, 11, 0))
+                .createdAt(new Date(2024, 7, 1))
+                .updatedAt(new Date(2024, 10, 11))
                 .password("password2")
                 .memberDto(memberDto)
                 .build();
@@ -398,6 +388,8 @@ class ScheduleServiceImplTest {
 
     @Test
     void findScheduleByMemberId() {
+        memberRepository.deleteMemberAndSchedule();
+
         // 테스트 멤버 생성
         memberDto = MemberDto.builder()
                 .id(1L)
@@ -414,8 +406,8 @@ class ScheduleServiceImplTest {
                 .title("Original Test Title")
                 .description("Original Test Description")
                 .author("Original Author")
-                .createdAt(LocalDateTime.of(2024, 7, 1, 0, 0))
-                .updatedAt(LocalDateTime.of(2024, 7, 10, 0, 0))
+                .createdAt(new Date(2024, 7, 10))
+                .updatedAt(new Date(2024, 7, 10))
                 .password("password1")
                 .memberDto(memberDto)
                 .build();
@@ -429,7 +421,7 @@ class ScheduleServiceImplTest {
         assertThat(schedule.getTitle()).isEqualTo("Original Test Title");
         assertThat(schedule.getDescription()).isEqualTo("Original Test Description");
         assertThat(schedule.getAuthor()).isEqualTo("Original Author");
-        assertThat(schedule.getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 7, 10, 0, 0));
+        assertThat(schedule.getUpdatedAt()).isEqualTo(new Date(2024, 7, 10));
     }
 
 }
