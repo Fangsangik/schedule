@@ -2,12 +2,12 @@ package com.example.dailyschedule.schedule.validation;
 import com.example.dailyschedule.member.dto.MemberDto;
 import com.example.dailyschedule.member.entity.Member;
 import com.example.dailyschedule.member.repository.MemberRepository;
-import com.example.dailyschedule.schedule.dto.CombinedScheduleDto;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
+import com.example.dailyschedule.schedule.dto.UpdateScheduleDto;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import com.example.dailyschedule.schedule.repository.ScheduleRepositoryImpl;
 
-import java.time.LocalDateTime;
+import java.sql.Date;
 import java.util.List;
 
 public class ScheduleValidation {
@@ -53,7 +53,7 @@ public class ScheduleValidation {
     }
 
     // updatedAt과 author를 검증하는 메서드
-    public void validateUpdateDateAndAuthor(LocalDateTime updatedAt, String author) {
+    public void validateUpdateDateAndAuthor(Date updatedAt, String author) {
         List<Schedule> schedules = scheduleRepository.findSchedulesByUpdatedDateAndAuthor(updatedAt, author);
 
         if (schedules.isEmpty()) {
@@ -67,28 +67,26 @@ public class ScheduleValidation {
         validateId(id, schedule);
     }
 
-    // 업데이트를 위한 유효성 검증 및 스케줄 준비 메서드
-    public Schedule validateAndPrepareUpdatedSchedule(CombinedScheduleDto combinedScheduleDto, Schedule schedule) {
-        // updatedAt 날짜로 스케줄 조회 및 유효성 검사
-        List<Schedule> schedulesByDate = scheduleRepository.findByDate(combinedScheduleDto.getScheduleDto().getUpdatedAt());
-        if (schedulesByDate.isEmpty()) {
-            throw new IllegalArgumentException("해당 날짜에 해당하는 일정이 존재하지 않습니다.");
-        }
-
+    public Schedule validateAndPrepareUpdatedSchedule(UpdateScheduleDto updateScheduleDto, Schedule existingSchedule) {
         // ID와 비밀번호 유효성 검사
-        validateExistId(combinedScheduleDto.getScheduleDto().getId());
-        validatePassword(combinedScheduleDto.getScheduleDto().getPassword(), schedule);
+        if (!existingSchedule.getPassword().equals(updateScheduleDto.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
 
         // 새로운 Schedule 객체 생성하여 업데이트 내용 반영
         return Schedule.builder()
-                .id(schedule.getId())                        // 기존 ID 유지
-                .createdAt(schedule.getCreatedAt())          // 기존 생성일 유지
-                .updatedAt(LocalDateTime.now())              // 현재 시간으로 updatedAt 변경
-                .author(combinedScheduleDto.getScheduleDto().getAuthor())     // DTO에서 가져온 author 값으로 변경
-                .title(combinedScheduleDto.getScheduleDto().getTitle())       // DTO에서 가져온 title 값으로 변경
-                .password(schedule.getPassword())            // 기존 비밀번호 유지
+                .id(existingSchedule.getId()) // ID는 기존 값 유지
+                .title(updateScheduleDto.getTitle()) // Title은 변경하지 않음
+                .author(updateScheduleDto.getAuthor()) // 변경된 작성자명
+                .password(existingSchedule.getPassword()) // 비밀번호는 기존 값 유지
+                .description(existingSchedule.getDescription()) // 변경된 할일(description)
+                .createdAt(existingSchedule.getCreatedAt()) // 작성일은 기존 값 유지
+                .updatedAt(new Date(System.currentTimeMillis())) // 수정일을 현재 시점으로 설정
+                .deletedAt(existingSchedule.getDeletedAt()) // 삭제일은 기존 값 유지
+                .member(existingSchedule.getMember()) // Member는 기존 값 유지
                 .build();
     }
+
 
     //회원 아이디와 스케줄 아이디 검증
     public void validationOfFindScheduleByMemberId(ScheduleDto scheduleDto, MemberDto memberDto) {
