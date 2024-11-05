@@ -59,7 +59,7 @@ public class ScheduleConverter {
                 .deletedAt(schedule.getDeletedAt())
                 .description(schedule.getDescription())
                 .password(schedule.getPassword())
-                .memberDto(memberConverter.toDto(schedule.getMember()))
+                .memberDto(schedule.getMember() != null ? memberConverter.toDto(schedule.getMember()) : null)
                 .build();
     }
 }

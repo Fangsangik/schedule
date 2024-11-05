@@ -6,12 +6,8 @@ import com.example.dailyschedule.member.entity.Member;
 import com.example.dailyschedule.member.repository.MemberRepository;
 import com.example.dailyschedule.member.service.MemberService;
 import com.example.dailyschedule.schedule.converter.ScheduleConverter;
-<<<<<<< HEAD
 import com.example.dailyschedule.schedule.dto.UpdateScheduleDto;
-=======
 import com.example.dailyschedule.schedule.dto.SingleDateScheduleDto;
-import com.example.dailyschedule.schedule.dto.UpdatedDtoSchedule;
->>>>>>> 800c2e4 (feat : "아이디로 선택 일정 조회")
 import com.example.dailyschedule.schedule.entity.Schedule;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.example.dailyschedule.schedule.repository.ScheduleRepositoryImpl;
@@ -83,9 +79,6 @@ public class ScheduleServiceImpl {
                 .collect(Collectors.toList());
     }
 
-<<<<<<< HEAD
-    //update 날짜 내림차순 조회
-=======
     //선택 일정 조회 (선택한 일정 정보 불러오기)
     @Transactional(readOnly = true)
     public SingleDateScheduleDto findDateById(Long id, String field, Date date) {
@@ -95,16 +88,7 @@ public class ScheduleServiceImpl {
         return getSingleDateScheduleDto(field, findDate);
     }
 
-    //스케줄 update (title, author)
-    @Transactional
-    public ScheduleDto updateTitleAndAuthor(Long id, UpdatedDtoSchedule updatedDtoSchedule) {
-        Schedule existingSchedule = scheduleRepositoryImpl.findScheduleById(id);
-        Schedule updatedSchedule = scheduleValidation.validateAndPrepareUpdatedSchedule(updatedDtoSchedule, existingSchedule);
-        scheduleRepositoryImpl.updateSchedule(updatedSchedule);
-        return scheduleConverter.toDto(updatedSchedule);
-    }
     //내림차순 조회
->>>>>>> 800c2e4 (feat : "아이디로 선택 일정 조회")
     @Transactional(readOnly = true)
     public List<ScheduleDto> findByUpdatedDateDesc() {
         List<Schedule> byUpdatedDateByDesc = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc();
@@ -137,7 +121,6 @@ public class ScheduleServiceImpl {
         return scheduleDtoList;
     }
 
-<<<<<<< HEAD
     //Lv2
     //스케줄 update (title, author)
     @Transactional
@@ -152,8 +135,6 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(updatedSchedule);
     }
 
-=======
->>>>>>> 800c2e4 (feat : "아이디로 선택 일정 조회")
     //스케줄 삭제
     @Transactional
     public void deleteById(Long id, String password) {
@@ -162,7 +143,6 @@ public class ScheduleServiceImpl {
         scheduleRepositoryImpl.deleteScheduleById(existSchedule.getId());
     }
 
-<<<<<<< HEAD
     //Lv3
     //회원 Id, 스케줄 Id 동시 조회 List
     @Transactional(readOnly = true)
@@ -201,8 +181,6 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(schedule);
     }
 
-}
-=======
     private static SingleDateScheduleDto getSingleDateScheduleDto(String field, Schedule findDate) {
         Date selectDate;
 
@@ -222,4 +200,4 @@ public class ScheduleServiceImpl {
         return new SingleDateScheduleDto(findDate.getId(), findDate.getTitle(), findDate.getAuthor(), selectDate);
     }
 }
->>>>>>> 800c2e4 (feat : "아이디로 선택 일정 조회")
+
