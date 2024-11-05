@@ -189,7 +189,7 @@ public class ScheduleRepositoryImpl {
         String sql = String.format("select * from schedule where %s = ? and id = ?", field);
 
         // query 메서드를 사용하여 다수의 결과를 리스트로 반환
-        return jdbcTemplate.queryForObject(sql, new Object[]{date, id}, scheduleRowMapper());
+        return jdbcTemplate.queryForObject(sql, new Object[]{date, id}, simpleScheduleRowMapper());
     }
 
     public List<Schedule> findSchedulesByMemberId(Long memberId) {
@@ -254,5 +254,20 @@ public class ScheduleRepositoryImpl {
                     .member(member)  // member_id를 설정한 Member 객체 설정
                     .build();
         };
+
+    }
+
+    private RowMapper<Schedule> simpleScheduleRowMapper() {
+        return (rs, rowNum) ->
+                Schedule.builder()
+                        .id(rs.getLong("id"))
+                        .author(rs.getString("author"))
+                        .title(rs.getString("title"))
+                        .password(rs.getString("password"))
+                        .description(rs.getString("description"))
+                        .createdAt(rs.getDate("created_at"))
+                        .updatedAt(rs.getDate("updated_at"))
+                        .deletedAt(rs.getDate("deleted_at"))
+                        .build();
     }
 }
