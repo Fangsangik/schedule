@@ -19,7 +19,7 @@ public class ScheduleDto {
     private Long id;
 
     @NotBlank(message = "제목은 필수 입니다.")
-    @Size(max = 100, message = "제목은 최대 100자까지 입력 가능합니다.")
+    @Size(max = 200, message = "제목은 최대 200자까지 입력 가능합니다.")
     private String title; //이벤트 제목
 
     @NotBlank(message = "작성자는 필수 입니다.")
