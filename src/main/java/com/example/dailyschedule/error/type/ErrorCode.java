@@ -6,7 +6,7 @@ import lombok.Getter;
 public enum ErrorCode {
     CREATION_FAILED("생성에 실패했습니다.", 400),
     UPDATE_FAILED("update에 실패했습니다.", 400),
-    DELETE_FAILED("삭제에 실패했습니다.", 400),
+    DELETE_FAILED("이미 삭제된 내용입니다.", 400),
 
     ID_EXIST("중복된 아이디 입니다. " , 409),
     USER_ID_EXIST("중복된 userId 입니다. " , 409),
