@@ -1,16 +1,10 @@
 # schedule
---
 ## ⚒️ Tools 
-
+ <img src="https://img.shields.io/badge/mysql-4479A1?style=for-the-badge&logo=mysql&logoColor=white"> <img src="https://img.shields.io/badge/spring-6DB33F?style=for-the-badge&logo=github&logoColor=Green"> <img alt="Java" src ="https://img.shields.io/badge/Java-007396.svg?&style=for-the-badge&logo=Java&logoColor=white"/>  <img alt="Java" src ="https://img.shields.io/badge/intellijidea-000000.svg?&style=for-the-badge&logo=intellijidea&logoColor=white"/>
 --
 ## 👨‍💻 Period : 2024/10/29 ~ 2024/11/06
---
 ## ERD 
-
---
 ## 
-
---
 ## 👨‍💻 기능 설명 
 ### - JdbcTemplate 사용 (Lv1 & Lv2)
   - Entity : Schedule
@@ -34,7 +28,7 @@
         - 추가로 기능 구현 한 부분
           findByDate : 동일 날짜가 여러개 일 수 있으므로 List 처리   
  
-  - Validatione : ScheduleValidation  
+  - Validation : ScheduleValidation  
 
 ### - Lv3-with-Member
   **Schedule**
@@ -57,7 +51,7 @@
           findScheduleByMemberId : 회원과 스케줄을 join 해서 동시 조회
           findSchedulesByMemberId : 회원과 스케줄을 join 해서 동시 조회 부분을 List화
     
-  - Validatione : ScheduleValidation
+  - Validation : ScheduleValidation
  
   **Member**
   - Entity : Member
@@ -72,6 +66,8 @@
         - findByUserIde : userId로 회원 조회
         - update : 회원 전체 수정
         - deleteById : pk 값으로 아이디 삭제
+        
+    - validation : MemberValidation
 
 ### Lv4 & Lv 5 
   **Schedule**
@@ -100,7 +96,7 @@
         findSchedulesByMemberId
         findByUpdatedDateAndAuthor
     
-  - Validatione : ScheduleValidation
+  - Validation : ScheduleValidation
  
   **Member**
   - Entity : Member
@@ -120,6 +116,8 @@
         - update : 회원 전체 수정
         - deleteById : pk 값으로 아이디 삭제
         - 각 CustomError 처리 
+
+    - validation : MemberValidation
 
  **Error**
  - ErrorDto
@@ -163,7 +161,7 @@
         findSchedulesByMemberId
         findByUpdatedDateAndAuthor
     
-  - Validatione : ScheduleValidation
+  - Validation : ScheduleValidation
  
   **Member**
   - Entity : Member
@@ -186,7 +184,9 @@
         - findByUserIde : userId로 회원 조회
         - update : 회원 전체 수정
         - deleteById : pk 값으로 아이디 삭제
-        - 각 CustomError 처리 
+        - 각 CustomError 처리
+    
+    - validation : MemberValidation
 
  **Error**
  - ErrorDto
