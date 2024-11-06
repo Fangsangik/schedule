@@ -4,7 +4,22 @@
 --
 ## 👨‍💻 Period : 2024/10/29 ~ 2024/11/06
 ## ERD 
-## 
+![ERD](https://github.com/user-attachments/assets/d9d23a23-2b89-44cc-a3c1-065b5166fe90)
+## API 명세서
+**Lv1&Lv2**
+
+<a href>https://www.postman.com/gold-robot-131519/myapi/documentation/2zga2q0/lv1-lv2?workspaceId=c64232d4-fdd3-46da-b127-41e93826dc0a</a-href>
+
+**Lv3 & Lv4 & Lv5**
+
+MemberAPI
+
+<a href>https://www.postman.com/gold-robot-131519/workspace/myapi/documentation/25410109-65a8add9-a0e1-4378-8252-46907d9a58d3/publish?workspaceId=c64232d4-fdd3-46da-b127-41e93826dc0a</a-href>
+
+**ScheduleAPI**
+
+<a href>https://www.postman.com/gold-robot-131519/myapi/documentation/4xuox4d/scheduleapi?workspaceId=c64232d4-fdd3-46da-b127-41e93826dc0a</a-href>
+
 ## 👨‍💻 기능 설명 
 ### - JdbcTemplate 사용 (Lv1 & Lv2)
   - Entity : Schedule
