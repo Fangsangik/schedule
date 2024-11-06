@@ -1,6 +1,5 @@
 package com.example.dailyschedule.schedule.controller;
 
-import com.example.dailyschedule.schedule.dto.DeleteScheduleRequest;
 import com.example.dailyschedule.schedule.dto.ScheduleDto;
 import com.example.dailyschedule.schedule.dto.SingleDateScheduleDto;
 import com.example.dailyschedule.schedule.dto.UpdatedDtoSchedule;
@@ -123,9 +122,9 @@ public class ScheduleController {
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<?> deleteSchedule(
             @PathVariable Long scheduleId,
-            @RequestBody DeleteScheduleRequest deleteScheduleRequest) {
+            @RequestBody ScheduleDto scheduleDto) {
         try {
-            scheduleService.deleteById(scheduleId, deleteScheduleRequest.getPassword());
+            scheduleService.deleteById(scheduleId, scheduleDto.getPassword());
             return ResponseEntity.status(HttpStatus.OK).build();
         } catch (IllegalArgumentException e) {
             log.error("일정을 삭제하는데 실패했습니다. : {}", e.getMessage());
