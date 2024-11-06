@@ -25,6 +25,7 @@ public class ScheduleController {
         this.scheduleService = scheduleService;
     }
 
+    //아이디로 조회
     @GetMapping("/{scheduleId}")
     public ResponseEntity<?> findById(@PathVariable Long scheduleId) {
 
@@ -55,6 +56,7 @@ public class ScheduleController {
     }
 
     //Date -> DateTimeFormat 사용 X
+    //update 날짜와 작성자 명으로 조회
     @GetMapping("/search")
     public ResponseEntity<?> findScheduleByUpdatedDateAndAuthor(
             @RequestParam("updatedAt")
@@ -69,6 +71,7 @@ public class ScheduleController {
         }
     }
 
+    //update 날짜 조회
     @GetMapping("/date")
     public ResponseEntity<?> findByUpdatedDate(
             @RequestParam Date updatedAt,
@@ -83,6 +86,7 @@ public class ScheduleController {
         }
     }
 
+    //update 날짜 내림차순 조회
     @GetMapping("/dateDesc")
     public ResponseEntity<?> findByUpdatedDateDesc(SearchDto searchDto) {
         try {
@@ -94,6 +98,7 @@ public class ScheduleController {
         }
     }
 
+    //스케줄로 memberid 조회
     @GetMapping("/{memberId}/{scheduleId}")
     public ResponseEntity<?> findSchedulesByMemberId(
             @PathVariable Long memberId,
@@ -110,6 +115,7 @@ public class ScheduleController {
         }
     }
 
+    //Page 조회
     @GetMapping("/{memberId}/schedules/{scheduleId}")
     public ResponseEntity<?> findScheduleByMemberId(@PathVariable Long memberId,
                                                     @PathVariable Long scheduleId
@@ -123,6 +129,7 @@ public class ScheduleController {
         }
     }
 
+    //셍성
     @PostMapping("/")
     public ResponseEntity<?> createSchedule(
             @Valid @RequestBody ScheduleDto scheduleDto) {
@@ -136,6 +143,7 @@ public class ScheduleController {
         }
     }
 
+    //수정 -> author title 만 수정
     @PutMapping("/{scheduleId}")
     public ResponseEntity<?> updateSchedule(
             @PathVariable Long scheduleId,
@@ -151,6 +159,7 @@ public class ScheduleController {
     }
 
 
+    //삭제
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<?> deleteSchedule(
             @PathVariable Long scheduleId,

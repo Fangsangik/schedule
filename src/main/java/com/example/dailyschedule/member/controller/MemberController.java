@@ -24,6 +24,7 @@ public class MemberController {
         this.memberService = memberService;
     }
 
+    //회원 아이디 조회
     @GetMapping("/{memberId}")
     public ResponseEntity<?> findByMemberId(@PathVariable("memberId") Long memberId) {
         try {
@@ -35,6 +36,7 @@ public class MemberController {
         }
     }
 
+    //userId 조회
     @GetMapping("/userId")
     public ResponseEntity<?> findByUserId(@RequestParam("userId") String userId) {
         try {
@@ -46,6 +48,7 @@ public class MemberController {
         }
     }
 
+    //생성
     @PostMapping("/")
     public ResponseEntity<?> createMember(@Valid @RequestBody MemberDto memberDto) {
         try {
@@ -57,6 +60,7 @@ public class MemberController {
         }
     }
 
+    //수정
     @PutMapping("/{memberId}")
     public ResponseEntity<?> updateMember(@PathVariable("memberId") Long memberId, @Valid @RequestBody MemberDto memberDto) {
         try {
@@ -68,6 +72,7 @@ public class MemberController {
         }
     }
 
+    //삭제
     @DeleteMapping("/{memberId}")
     public ResponseEntity<?> deleteMember(@PathVariable("memberId") Long memberId, @Valid @RequestBody DeleteMemberRequest deleteMemberRequest) {
         try {

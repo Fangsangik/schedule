@@ -11,6 +11,7 @@ import java.util.List;
 
 import static com.example.dailyschedule.error.type.ErrorCode.*;
 
+//MemberRepository
 @Repository
 public class MemberRepository {
 
@@ -20,6 +21,7 @@ public class MemberRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    //생성
     public Member createMember(Member member) {
 
         String sql = "INSERT INTO member (user_id, password, name, email, updated_at) VALUES (?, ?, ?, ?, ?)";
@@ -43,6 +45,7 @@ public class MemberRepository {
                 .build();
     }
 
+    //userId 조회
     public Member findByUserId(String userId) {
         String selectMemberSql = "SELECT * FROM member WHERE user_id = ?";
         try {
@@ -62,11 +65,13 @@ public class MemberRepository {
     }
 
 
+    //전체 조회
     public List<Member> findAll() {
         String sql = "select * from member";
         return jdbcTemplate.query(sql, memberRowMapper());
     }
 
+    //아이디 조회
     public Member findById(Long id) {
         if (id == null) {
             throw new CustomException(ID_NOT_FOUND);
@@ -81,6 +86,7 @@ public class MemberRepository {
         }
     }
 
+    //회원 수정
     public Member updateMember(Member member) {
         String sql = "update member set user_Id = ?, password = ?, name = ?, email = ?, updated_at = ? where id = ?";
 
@@ -99,6 +105,7 @@ public class MemberRepository {
         return member;
     }
 
+    //삭제
     public void deleteMember(Long id) {
         if (id == null) {
             throw new CustomException(ID_NOT_FOUND);
@@ -111,6 +118,7 @@ public class MemberRepository {
         }
     }
 
+    //이름 조회
     public Member findByName(String name) {
         if (name == null) {
             throw new CustomException(NOT_FOUND);
@@ -120,17 +128,7 @@ public class MemberRepository {
         return jdbcTemplate.queryForObject(sql, new Object[]{name}, memberRowMapper());
     }
 
-    private RowMapper<Member> memberRowMapper () {
-        return (rs, rowNum) -> Member.builder()
-                .id(rs.getLong("id"))
-                .name(rs.getString("name"))
-                .userId(rs.getString("user_id"))
-                .email(rs.getString("email"))
-                .password(rs.getString("password"))
-                .updatedAt(rs.getDate("updated_at"))
-                .build();
-    }
-
+    //삭제
     public void deleteMember() {
         String memberSql = "delete from member";
         int memberDeletedCount = jdbcTemplate.update(memberSql);
@@ -141,6 +139,7 @@ public class MemberRepository {
         }
     }
 
+    //회원과 스케줄 동시 삭제
     public void deleteMemberAndSchedule() {
 
         String memberSql = "delete from member";
@@ -154,5 +153,17 @@ public class MemberRepository {
         if (memberDeletedCount == 0 && scheduleDeletedCount == 0) {
             throw new IllegalArgumentException("삭제할 데이터가 없습니다.");
         }
+    }
+
+    //MemberRowMapper
+    private RowMapper<Member> memberRowMapper () {
+        return (rs, rowNum) -> Member.builder()
+                .id(rs.getLong("id"))
+                .name(rs.getString("name"))
+                .userId(rs.getString("user_id"))
+                .email(rs.getString("email"))
+                .password(rs.getString("password"))
+                .updatedAt(rs.getDate("updated_at"))
+                .build();
     }
 }

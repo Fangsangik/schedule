@@ -25,7 +25,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    // userId 제거
+    // 셍상
     public Schedule createSchedule(Schedule schedule, Member member) {
 
         String sql = "INSERT INTO schedule (author, title, created_at, password, description, updated_at, deleted_at, member_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
@@ -57,6 +57,7 @@ public class ScheduleRepositoryImpl {
                 .build();
     }
 
+    //udpate
     public Schedule updateSchedule(Member member, Schedule schedule) {
         if (schedule.getId() == null) {
             throw new IllegalArgumentException("해당 id가 존재하지 않습니다.");
@@ -82,6 +83,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
+    //스케줄 아이디 조회
     public Schedule findScheduleById(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("Id 값이 null 입니다");
@@ -104,6 +106,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
+    //스케줄 아이디로 삭제
     public void deleteScheduleById(Long scheduleId) {
 
         String sql = "delete from schedule where id = ?";
@@ -126,7 +129,7 @@ public class ScheduleRepositoryImpl {
         }
     }
 
-
+    //Page로 update 날짜 내림차순 조회
     public Page<Schedule> findAllOrderByUpdatedDateDesc(SearchDto searchDto) {
 
         int limit = searchDto.getLimit();
@@ -156,6 +159,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
+    //update 날짜와 author로 page 조회
     public Page<Schedule> findSchedulesByUpdatedDateAndAuthor(Date updatedAt, String author, SearchDto searchDto) {
         if (updatedAt == null && author == null) {
             throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
@@ -179,6 +183,7 @@ public class ScheduleRepositoryImpl {
             return new PageImpl<>(Collections.emptyList(), PageRequest.of(offset / limit, limit), total);
         }
 
+        //member join
         String sql = """
             SELECT s.*, 
                    m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
@@ -215,6 +220,7 @@ public class ScheduleRepositoryImpl {
     }
 
 
+    //날짜 조회
     public Page<Schedule> findByDate(Date date, SearchDto searchDto) {
         if (date == null) {
             throw new IllegalArgumentException("해당 날짜가 없습니다.");
@@ -237,6 +243,7 @@ public class ScheduleRepositoryImpl {
             """;
         Long totalCount = jdbcTemplate.queryForObject(countSql, new Object[]{date, date, date}, Long.class);
 
+        //전체 page 수 넘었을때 empty 반환
         if (totalCount == 0 || offset >= totalCount) {
             return new PageImpl<>(Collections.emptyList(), PageRequest.of(offset / limit, limit), totalCount);
         }
@@ -348,6 +355,7 @@ public class ScheduleRepositoryImpl {
         };
     }
 
+    //Schedule만 있는 RowMapper
     private RowMapper<Schedule> simpleScheduleRowMapper() {
         return (rs, rowNum) -> Schedule.builder()
                 .id(rs.getLong("id"))

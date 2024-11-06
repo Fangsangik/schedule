@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.sql.Date;
 
-
+//회원 엔티티
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

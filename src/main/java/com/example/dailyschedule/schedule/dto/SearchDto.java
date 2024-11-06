@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+//Page dto
 @Getter
 @Builder
 @AllArgsConstructor

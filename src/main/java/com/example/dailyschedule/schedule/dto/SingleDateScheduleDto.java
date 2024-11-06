@@ -11,6 +11,7 @@ import java.sql.Date;
 @AllArgsConstructor
 @Getter
 @Builder
+//id로 선택 날짜 title author 조회
 public class SingleDateScheduleDto {
     private Long id;
     private String title;

@@ -13,6 +13,7 @@ import java.sql.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+//스케줄 Dto
 public class ScheduleDto {
     @NotNull(message = "ID는 필수 입니다.")
     private Long id;

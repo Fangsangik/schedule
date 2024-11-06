@@ -45,6 +45,7 @@ public class ScheduleServiceImpl {
         this.memberConverter = memberConverter;
     }
 
+    //생성
     @Transactional
     public ScheduleDto create(MemberDto memberDto, ScheduleDto scheduleDto) {
         if (memberDto == null || memberDto.getId() == null) {
@@ -66,6 +67,7 @@ public class ScheduleServiceImpl {
     }
 
 
+    //update
     @Transactional
     public ScheduleDto update(MemberDto memberDto, ScheduleDto scheduleDto) {
         Member member = memberConverter.toEntity(memberService.findById(memberDto.getId()));
@@ -73,12 +75,14 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(updateSchedule);
     }
 
+    //id 조회
     @Transactional(readOnly = true)
     public ScheduleDto findById(Long id) {
         Schedule existId = scheduleValidation.validateExistId(id);
         return scheduleConverter.toDto(existId);
     }
 
+    //수정일과 작성자 명으로 조회
     @Transactional(readOnly = true)
     public Page<ScheduleDto> findByUpdatedDateAndAuthor(Date updatedAt, String author, SearchDto searchDto) {
         scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author, searchDto);
@@ -92,6 +96,7 @@ public class ScheduleServiceImpl {
         return schedules.map(scheduleConverter::toDto);
     }
 
+    //내림차순 조회
     @Transactional(readOnly = true)
     public Page<ScheduleDto> findByUpdatedDateDesc(SearchDto searchDto) {
         Page<Schedule> byUpdatedDateByDesc = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc(searchDto);
@@ -99,6 +104,7 @@ public class ScheduleServiceImpl {
         return byUpdatedDateByDesc.map(scheduleConverter::toDto);
     }
 
+    //날짜로 조회
     @Transactional(readOnly = true)
     public Page<ScheduleDto> findByDate(Date date, SearchDto searchDto) {
         Page<Schedule> findDates = scheduleRepositoryImpl.findByDate(date, searchDto);
@@ -110,6 +116,7 @@ public class ScheduleServiceImpl {
     }
 
     //Lv2
+    //update 날짜와 작성자 명으로 조회
     @Transactional
     public ScheduleDto updateTitleAndAuthor(Long scheduleId, UpdateScheduleDto updatedScheduleDto) {
         // 기존 일정 조회
@@ -123,7 +130,7 @@ public class ScheduleServiceImpl {
     }
 
 
-
+    //아이디 삭제
     @Transactional
     public void deleteById(Long id, String password) {
         Schedule existSchedule = scheduleRepositoryImpl.findScheduleById(id);

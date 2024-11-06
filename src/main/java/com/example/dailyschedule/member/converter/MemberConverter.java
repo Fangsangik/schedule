@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class MemberConverter {
 
+    //Dto -> entity
     public Member toEntity(MemberDto memberDto) {
         return Member.builder()
                 .id(memberDto.getId())
@@ -19,6 +20,7 @@ public class MemberConverter {
     }
 
 
+    //entity -> toDto
     public MemberDto toDto(Member member) {
         return MemberDto.builder()
                 .id(member.getId())

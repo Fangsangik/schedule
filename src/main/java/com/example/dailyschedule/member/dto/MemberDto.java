@@ -1,14 +1,13 @@
 package com.example.dailyschedule.member.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.sql.Date;
 
+//회원 Dto
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
