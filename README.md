@@ -148,7 +148,7 @@ MemberAPI
         - Controller 부분도 Paging 처리 
         - 각 CustomError 처리
     
-  - Dto : ScheduleDto, UpdatedScheduleDto, SingleDateScheduleDto, DeleteScheduleRequest, SearchDto (paging 부분을 Dto화)
+  - Dto : ScheduleDto, UpdatedScheduleDto, SingleDateScheduleDto, SearchDto (paging 부분을 Dto화)
   
         - ScheduleDto에 Vaild 처리
           id : 빈값 방지
