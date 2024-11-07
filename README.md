@@ -84,7 +84,7 @@ MemberAPI
         
     - validation : MemberValidation
 
-### Lv4 & Lv 5 
+### - Lv4 & Lv 5 
   **Schedule**
   - Entity : Schedule
   - Controller : ScheduleController
@@ -140,7 +140,7 @@ MemberAPI
  - CustomException : RuntimeException을 상속 받음
  - GlobalExceptionHandler : RestControllerAdvise를 사용해서 Controllre에서 발생하는 Error 처리 & 그 밖에 예외는 InternalException으로 처리
 
-### Lv 6 Vaild
+### - Lv 6 Vaild
   **Schedule**
   - Entity : Schedule
   - Controller : ScheduleController
