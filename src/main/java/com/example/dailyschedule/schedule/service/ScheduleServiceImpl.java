@@ -100,7 +100,7 @@ public class ScheduleServiceImpl {
     @Transactional(readOnly = true)
     public Page<ScheduleDto> findByUpdatedDateDesc(SearchDto searchDto) {
         Page<Schedule> byUpdatedDateByDesc = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc(searchDto);
-      // Schedule을 ScheduleDto로 변환 후 Page<ScheduleDto>로 반환
+        // Schedule을 ScheduleDto로 변환 후 Page<ScheduleDto>로 반환
         return byUpdatedDateByDesc.map(scheduleConverter::toDto);
     }
 
