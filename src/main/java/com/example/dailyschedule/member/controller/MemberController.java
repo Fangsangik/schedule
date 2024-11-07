@@ -68,7 +68,7 @@ public class MemberController {
             return ResponseEntity.ok(updatedMember);
         } catch (CustomException e) {
             log.error("회원 업데이트에 실패했습니다. {}", e.getMessage());
-            throw e;
+            throw new CustomException(ErrorCode.UPDATE_FAILED);
         }
     }
 
