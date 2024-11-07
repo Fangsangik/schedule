@@ -10,7 +10,6 @@ import java.sql.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Setter
 //스케줄 엔티티
 public class Schedule {
     private Long id;

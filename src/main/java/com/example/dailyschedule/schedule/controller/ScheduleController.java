@@ -163,9 +163,9 @@ public class ScheduleController {
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<?> deleteSchedule(
             @PathVariable Long scheduleId,
-            @Valid @RequestBody DeleteScheduleRequest deleteScheduleRequest) {
+            @Valid @RequestBody String password) {
         try {
-            scheduleService.deleteById(scheduleId, deleteScheduleRequest.getPassword());
+            scheduleService.deleteById(scheduleId, password);
             return ResponseEntity.status(HttpStatus.OK).build();
         } catch (CustomException e) {
             log.error("일정을 삭제하는데 실패했습니다. : {}", e.getMessage());

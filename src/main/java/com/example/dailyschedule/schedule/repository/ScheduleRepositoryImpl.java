@@ -1,6 +1,7 @@
 package com.example.dailyschedule.schedule.repository;
 
 import com.example.dailyschedule.member.entity.Member;
+import com.example.dailyschedule.schedule.converter.ScheduleConverter;
 import com.example.dailyschedule.schedule.dto.SearchDto;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import org.springframework.dao.EmptyResultDataAccessException;
