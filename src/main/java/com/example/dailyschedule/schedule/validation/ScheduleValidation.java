@@ -84,10 +84,6 @@ public class ScheduleValidation {
             throw new CustomException(PASSWORD_INCORRECT);
         }
 
-        if (!existingSchedule.getId().equals(updateScheduleDto.getId())) {
-            throw new CustomException(ID_INCORRECT);
-        }
-
         // 새로운 Schedule 객체 생성하여 업데이트 내용 반영
         return Schedule.builder()
                 .id(existingSchedule.getId()) // ID는 기존 값 유지
