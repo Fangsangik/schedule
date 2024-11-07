@@ -6,19 +6,9 @@
 ## ERD 
 ![ERD](https://github.com/user-attachments/assets/d9d23a23-2b89-44cc-a3c1-065b5166fe90)
 ## API 명세서
-**Lv1&Lv2**
+**Lv1&Lv2 / Lv3~Lv6은 Member와 스케줄에 있음**
 
-<a href>https://www.postman.com/gold-robot-131519/myapi/documentation/2zga2q0/lv1-lv2?workspaceId=c64232d4-fdd3-46da-b127-41e93826dc0a</a-href>
-
-**Lv3 & Lv4 & Lv5**
-
-MemberAPI
-
-<a href>https://www.postman.com/gold-robot-131519/workspace/myapi/documentation/25410109-65a8add9-a0e1-4378-8252-46907d9a58d3/publish?workspaceId=c64232d4-fdd3-46da-b127-41e93826dc0a</a-href>
-
-**ScheduleAPI**
-
-<a href>https://www.postman.com/gold-robot-131519/myapi/documentation/4xuox4d/scheduleapi?workspaceId=c64232d4-fdd3-46da-b127-41e93826dc0a</a-href>
+<a href>https://www.postman.com/gold-robot-131519/myapi/collection/25410109-4b5732e4-64b1-4b60-83f2-2cb88d1a0857</a-href>
 
 ## 👨‍💻 기능 설명 
 ### - JdbcTemplate 사용 (Lv1 & Lv2)
@@ -148,7 +138,7 @@ MemberAPI
         - Controller 부분도 Paging 처리 
         - 각 CustomError 처리
     
-  - Dto : ScheduleDto, UpdatedScheduleDto, SingleDateScheduleDto, SearchDto (paging 부분을 Dto화)
+  - Dto : ScheduleDto, UpdatedScheduleDto, SingleDateScheduleDto, DeletDto, SearchDto (paging 부분을 Dto화)
   
         - ScheduleDto에 Vaild 처리
           id : 빈값 방지
@@ -650,6 +640,7 @@ converter 부분을 Member를 포함시키지 않은것이 문제였다.
 1. 스케줄을 조회 할때 Member에 대한 정보중 id 값 까지만 불러왔으면 좋겠지만 불필요한 부가 정보까지 불러오는 문제가 있다. Response 값에서 제어를 하는 방법중 찾아보니 JsonIgnore 라는 기능이 있는 것 같아 추후 적용할 예정 
 2. SQL문 join 문에 전보다는 익숙해 졌지만 아직 paging 처리라던지 paging 처리 할때 page 초과할 경우 예외를 두는 부분이 어려웠음.
 3. Test Code를 짠다고 짰지만 NPE를 못잡는 경우, Controller에서 터지는 Error들을 못잡는 것을 확인, 좀더 세밀하게 짜야 겠다는 생각이 들었다.
+4. 1 메서드에 1 쿼리가 될 수 있도록 Paging 처리 부분을 Util로 빼서 해봐야 겠다.
 
 --- 
 ## 👍 좋았던 점 
