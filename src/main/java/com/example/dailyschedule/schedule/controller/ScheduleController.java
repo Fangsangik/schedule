@@ -56,6 +56,7 @@ public class ScheduleController {
                 throw new CustomException(ErrorCode.PASSWORD_INCORRECT);
             }
         }
+        throw new CustomException(ErrorCode.UPDATE_FAILED);
     }
 
     //update 날짜로 조회

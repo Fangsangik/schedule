@@ -86,6 +86,7 @@ public class ScheduleServiceImpl {
         return schedules.map(scheduleConverter::toDto);
     }
 
+
     //선택 일정 조회 (선택한 일정 정보 불러오기)
     @Transactional(readOnly = true)
     public SingleDateScheduleDto findDateById(Long id, String field, Date date) {
