@@ -1,21 +1,22 @@
 package com.example.dailyschedule.service;
 
-import com.example.dailyschedule.converter.ScheduleConverter;
-import com.example.dailyschedule.domain.Schedule;
-import com.example.dailyschedule.dto.ScheduleDto;
-import com.example.dailyschedule.repository.ScheduleRepositoryImpl;
-import org.junit.jupiter.api.Assertions;
+import com.example.dailyschedule.error.CustomException;
+import com.example.dailyschedule.member.converter.MemberConverter;
+import com.example.dailyschedule.member.dto.MemberDto;
+import com.example.dailyschedule.member.entity.Member;
+import com.example.dailyschedule.member.repository.MemberRepository;
+import com.example.dailyschedule.member.service.MemberService;
+import com.example.dailyschedule.schedule.dto.ScheduleDto;
+import com.example.dailyschedule.schedule.dto.SearchDto;
+import com.example.dailyschedule.schedule.dto.UpdatedScheduleDto;
+import com.example.dailyschedule.schedule.service.ScheduleServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.test.annotation.Commit;
+import org.springframework.data.domain.Page;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
+import java.sql.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,31 +28,43 @@ class ScheduleServiceImplTest {
     private ScheduleServiceImpl scheduleService;
 
     @Autowired
-    private ScheduleRepositoryImpl scheduleRepository;
+    private MemberRepository memberRepository;
 
     @Autowired
-    private ScheduleConverter scheduleConverter;
+    private MemberConverter memberConverter;
 
     private ScheduleDto schedule;
-
+    private MemberDto memberDto;
+    @Autowired
+    private MemberService memberService;
 
     @Test
     void create() {
+
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+
         schedule = ScheduleDto.builder()
-                //.id(1L)
+                .id(1L)
                 .title("test title")
                 .description("test description")
                 .author("test author")
-                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .createdAt(new Date(System.currentTimeMillis()))
+                .updatedAt(new Date(System.currentTimeMillis()))
                 .password("TestPassword")
+                .memberDto(memberDto)
                 .build();
 
-        // Schedule 생성
-        ScheduleDto createdSchedule = scheduleService.create(schedule);
-        assertNotNull(createdSchedule);
+        ScheduleDto createdSchedule = scheduleService.create(memberConverter.toDto(createdMember), schedule);
 
-        // 필드 값 검증
+        assertNotNull(createdSchedule);
         assertThat(createdSchedule.getTitle()).isEqualTo(schedule.getTitle());
         assertThat(createdSchedule.getDescription()).isEqualTo(schedule.getDescription());
         assertThat(createdSchedule.getAuthor()).isEqualTo(schedule.getAuthor());
@@ -59,64 +72,81 @@ class ScheduleServiceImplTest {
         assertThat(createdSchedule.getUpdatedAt()).isEqualTo(schedule.getUpdatedAt());
     }
 
+
     @Test
     @Transactional
     void findById() {
-        // 새로운 ScheduleDto 객체 생성
+        memberRepository.deleteMemberAndSchedule();
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+
         schedule = ScheduleDto.builder()
                 .id(1L)
                 .title("test title")
                 .description("test description")
                 .author("test author")
-                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .createdAt(new Date(System.currentTimeMillis()))
+                .updatedAt(new Date(System.currentTimeMillis()))
                 .password("TestPassword")
+                .memberDto(memberDto)
                 .build();
 
-        // 스케줄 생성
-        ScheduleDto createSchedule = scheduleService.create(schedule);
-        assertNotNull(createSchedule);  // 생성된 스케줄이 null이 아님을 확인
+        ScheduleDto createdSchedule = scheduleService.create(memberConverter.toDto(createdMember), schedule);
+        assertNotNull(createdSchedule);
 
-        // ID로 스케줄 조회
-        ScheduleDto findId = scheduleService.findById(createSchedule.getId());
-        assertNotNull(findId, "스케줄을 찾을 수 없습니다.");  // 조회된 스케줄이 null이 아님을 확인
-
-        // 조회된 스케줄의 ID가 생성된 스케줄의 ID와 같은지 확인
-        Assertions.assertEquals(createSchedule.getId(), findId.getId());
+        ScheduleDto findId = scheduleService.findById(createdSchedule.getId());
+        assertNotNull(findId, "스케줄을 찾을 수 없습니다.");
+        assertEquals(createdSchedule.getId(), findId.getId());
     }
 
     @Test
     @Transactional
     void update() {
-        // 새로운 ScheduleDto 객체 생성
+        memberRepository.deleteMemberAndSchedule();
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+        assertNotNull(createdMember.getId(), "생성된 Member의 ID가 null이 아님을 확인합니다."); // ID가 null이 아님을 확인
+        memberDto = memberConverter.toDto(createdMember); // memberDto에 생성된 ID 반영
+
         schedule = ScheduleDto.builder()
                 .id(1L)
                 .title("test title")
                 .description("test description")
                 .author("test author")
-                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .createdAt(new Date(System.currentTimeMillis()))
+                .updatedAt(new Date(System.currentTimeMillis()))
                 .password("TestPassword")
+                .memberDto(memberDto)
                 .build();
-        // Schedule 생성 및 저장
-        ScheduleDto createdSchedule = scheduleService.create(schedule);
+
+        ScheduleDto createdSchedule = scheduleService.create(memberDto, schedule);
         assertNotNull(createdSchedule);
 
-        // 업데이트할 ScheduleDto 생성
         ScheduleDto updatedData = ScheduleDto.builder()
                 .id(createdSchedule.getId())
                 .title("updated title")
                 .description("updated description")
                 .author("updated author")
                 .createdAt(schedule.getCreatedAt())
-                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .updatedAt(new Date(System.currentTimeMillis()))
                 .password("updated password")
                 .build();
 
-        // 업데이트 실행
-        ScheduleDto updatedSchedule = scheduleService.update(updatedData);
-
-        // 결과 검증
+        ScheduleDto updatedSchedule = scheduleService.update(memberConverter.toDto(createdMember), updatedData);
         assertNotNull(updatedSchedule);
         assertThat(updatedSchedule.getTitle()).isEqualTo("updated title");
         assertThat(updatedSchedule.getDescription()).isEqualTo("updated description");
@@ -127,150 +157,316 @@ class ScheduleServiceImplTest {
     @Test
     @Transactional
     void deleteById() {
-        // 새로운 ScheduleDto 객체 생성
+
+        memberRepository.deleteMemberAndSchedule();
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+
+
         schedule = ScheduleDto.builder()
                 .id(1L)
                 .title("test title")
                 .description("test description")
                 .author("test author")
-                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
+                .createdAt(new Date(System.currentTimeMillis()))
+                .updatedAt(new Date(System.currentTimeMillis()))
                 .password("TestPassword")
+                .memberDto(memberDto)
                 .build();
-        // Schedule 생성 및 저장
-        ScheduleDto createdSchedule = scheduleService.create(schedule);
+
+        ScheduleDto createdSchedule = scheduleService.create(memberConverter.toDto(createdMember), schedule);
         assertNotNull(createdSchedule);
 
-        // Schedule 삭제
-        scheduleService.deleteById(createdSchedule);
+        scheduleService.deleteById(createdSchedule.getId(), createdSchedule.getPassword());
 
-        // 삭제 후 스케줄 찾기 시도
-        assertThrows(EmptyResultDataAccessException.class, () -> {
+        assertThrows(CustomException.class, () -> {
             scheduleService.findById(createdSchedule.getId());
         });
     }
 
     @Test
-    void findByAuthorAndUpdateDate() {
-        schedule = ScheduleDto.builder()
+    @Transactional
+    void findByUpdatedDateDesc_withPagination() {
+        memberRepository.deleteMemberAndSchedule();
+        memberDto = MemberDto.builder()
                 .id(1L)
-                .title("test title")
-                .description("test description")
-                .author("test author")
-                .createdAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS))
-                .password("TestPassword")
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
                 .build();
+        MemberDto createdMember = memberService.createMember(memberDto);
 
-        ScheduleDto createdSchedule = scheduleService.create(schedule);
-        assertNotNull(createdSchedule);
-
-        ScheduleDto byUpdatedAtAuthor = scheduleService.findByUpdatedAt_author(schedule.getUpdatedAt(), createdSchedule.getAuthor());
-        assertNotNull(byUpdatedAtAuthor);
-        assertThat(byUpdatedAtAuthor.getTitle()).isEqualTo(createdSchedule.getTitle());
-    }
-
-    @Test
-    void findByUpdatedDateDesc() {
-        scheduleRepository.deleteAll();
         ScheduleDto schedule1 = ScheduleDto.builder()
+                .id(1L)
                 .title("First Test Title")
                 .description("First Test Description")
                 .author("Author1")
-                .createdAt(LocalDateTime.of(2024, 07, 01, 00,00))
-                .updatedAt(LocalDateTime.of(2024, 07, 10,00,00))  // 최신 날짜
+                .createdAt(new Date(System.currentTimeMillis()))
+                .updatedAt(new Date(System.currentTimeMillis()))
                 .password("password1")
                 .build();
 
         ScheduleDto schedule2 = ScheduleDto.builder()
+                .id(2L)
                 .title("Second Test Title")
                 .description("Second Test Description")
                 .author("Author2")
-                .createdAt(LocalDateTime.of(2024, 06, 01,00,00))
-                .updatedAt(LocalDateTime.of(2024, 07, 05,00,00))
+                .createdAt(new Date(2024, 07,10))
+                .updatedAt(new Date(2024, 07, 10))
                 .password("password2")
+                .memberDto(createdMember)
                 .build();
 
-        ScheduleDto schedule3 = ScheduleDto.builder()
-                .title("Third Test Title")
-                .description("Third Test Description")
-                .author("Author3")
-                .createdAt(LocalDateTime.of(2024, 05, 01,00,00))
-                .updatedAt(LocalDateTime.of(2024, 07, 01,00,00))  // 가장 오래된 날짜
-                .password("password3")
-                .build();
-        scheduleService.create(schedule1);
-        scheduleService.create(schedule2);
-        scheduleService.create(schedule3);
+        scheduleService.create(createdMember, schedule1);
+        scheduleService.create(createdMember, schedule2);
 
-        List<ScheduleDto> scheduleDtoList = scheduleService.findByUpdatedDateDesc();
-
-        assertFalse(scheduleDtoList.isEmpty());
-        assertThat(scheduleDtoList.size()).isEqualTo(3);
-
-        // 최신 updatedAt이 가장 첫 번째에 오는지 확인
-        assertThat(scheduleDtoList.get(0).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 10, 00,00));
-        assertThat(scheduleDtoList.get(1).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 05,00,00));
-        assertThat(scheduleDtoList.get(2).getUpdatedAt()).isEqualTo(LocalDateTime.of(2024, 07, 01,00,00));
-    }
-
-    @Test
-    void findDate() {
-        scheduleRepository.deleteAll();
-        ScheduleDto schedule = ScheduleDto.builder()
-                .title("First Test Title")
-                .description("First Test Description")
-                .author("Author1")
-                .createdAt(LocalDateTime.of(2024, 07, 01, 00, 00))
-                .updatedAt(LocalDateTime.of(2024, 07, 10, 00, 00))  // 최신 날짜
-                .password("password1")
+        // SearchDto를 통한 페이지네이션 설정
+        SearchDto searchDto = SearchDto.builder()
+                .page(0) // 첫 번째 페이지
+                .pageSize(1) // 페이지당 1개씩
                 .build();
 
-        ScheduleDto createSchedule = scheduleService.create(schedule);
-        ScheduleDto findDate = scheduleService.findByDate(createSchedule.getCreatedAt());
-        ScheduleDto updatedDate = scheduleService.findByDate(createSchedule.getUpdatedAt());
-        assertThat(findDate.getCreatedAt()).isEqualTo(LocalDateTime.of(2024,07,01,00,00));
-        assertThat(updatedDate.getUpdatedAt()).isEqualTo(LocalDateTime.of(2024,07,10,00,00));
+        Page<ScheduleDto> schedulePage = scheduleService.findByUpdatedDateDesc(searchDto);
+
+        assertFalse(schedulePage.isEmpty());
+        assertThat(schedulePage.getContent().size()).isEqualTo(2); // 한 페이지에 한 개의 스케줄이 있어야 함
+        assertThat(schedulePage.getTotalElements()).isEqualTo(2); // 전체 스케줄 개수
+        assertThat(schedulePage.getContent().get(0).getUpdatedAt()).isEqualTo(new Date(2024, 7, 10)); // 최신 날짜 확인
     }
 
     @Test
     void updatedDateByAuthorAndTitle() {
-        // 1. 데이터 초기화
-        scheduleRepository.deleteAll();
+        // 테스트 환경 준비: 기존 멤버와 일정 삭제
+        memberRepository.deleteMemberAndSchedule();
 
-        // 2. 초기 스케줄 생성
+        // 멤버 생성
+        MemberDto memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        MemberDto createdMember = memberService.createMember(memberDto);
+
+        // 첫 번째 일정 생성
         ScheduleDto schedule1 = ScheduleDto.builder()
-                .title("First Test Title")
-                .description("First Test Description")
-                .author("Author1")
-                .createdAt(LocalDateTime.of(2024, 07, 01,00,00))
-                .updatedAt(LocalDateTime.of(2024, 07, 10,00,00))  // 최신 날짜
+                .id(1L)
+                .title("Original Test Title")
+                .description("Original Test Description")
+                .author("Original Author")
+                .createdAt(new Date(System.currentTimeMillis()))
+                .updatedAt(new Date(System.currentTimeMillis()))
                 .password("password1")
+                .memberDto(createdMember) // memberDto 포함
                 .build();
 
-        // 스케줄 생성
-        ScheduleDto createdSchedule = scheduleService.create(schedule1);
+        ScheduleDto createdSchedule = scheduleService.create(createdMember, schedule1);
 
-        // 3. 업데이트할 데이터 설정
-        ScheduleDto updateSchedule = ScheduleDto.builder()
-                .id(createdSchedule.getId())
-                .title("Second Test Title")
-                .description(createdSchedule.getDescription())
-                .author("Author2")
-                .createdAt(createdSchedule.getCreatedAt())
-                .updatedAt(LocalDateTime.of(2024, 07, 11,00,00))  // 최신 날짜
-                .password(createdSchedule.getPassword())
+        // 업데이트할 정보만 포함된 UpdateScheduleDto 생성
+        UpdatedScheduleDto updateScheduleInfo = UpdatedScheduleDto.builder()
+                .title("Updated Test Description") // 할일(description) 업데이트
+                .author("Updated Author") // 작성자명 업데이트
+                .password("password1") // 비밀번호로 인증
                 .build();
 
-        // 4. 업데이트 수행
-        ScheduleDto updated = scheduleService.updatedDateByAuthorAndTitle(updateSchedule);
+        // 제목과 작성자명 업데이트
+        ScheduleDto updatedSchedule = scheduleService.updateTitleAndAuthor(createdSchedule.getId(), updateScheduleInfo);
 
-        // 5. 검증
-        assertThat(updated.getId()).isEqualTo(createdSchedule.getId());
-        assertThat(updated.getTitle()).isEqualTo("Second Test Title");
-        assertThat(updated.getDescription()).isEqualTo(createdSchedule.getDescription());
-        assertThat(updated.getAuthor()).isEqualTo("Author2");
-        assertThat(updated.getPassword()).isEqualTo(createdSchedule.getPassword());
+        // 업데이트된 필드를 검증
+        assertThat(updatedSchedule.getTitle()).isEqualTo("Updated Test Description");
+        assertThat(updatedSchedule.getAuthor()).isEqualTo("Updated Author");
+
+        // 수정일이 업데이트된 시점으로 변경되었는지 검증
+        assertThat(updatedSchedule.getUpdatedAt()).isAfter(createdSchedule.getUpdatedAt());
+    }
+
+
+    @Test
+    @Transactional
+    void findByDate_withPagination() {
+        memberRepository.deleteMemberAndSchedule();
+
+
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+
+        ScheduleDto schedule1 = ScheduleDto.builder()
+                .id(1L)
+                .title("Original Test Title")
+                .description("Original Test Description")
+                .author("Original Author")
+                .createdAt(new Date(2024, 07,10))
+                .updatedAt(new Date(2024, 07, 10))
+                .password("password1")
+                .memberDto(memberDto)
+                .build();
+
+        ScheduleDto scheduleDto = scheduleService.create(memberConverter.toDto(createdMember), schedule1);
+
+        SearchDto searchDto = SearchDto.builder()
+                .page(0)
+                .pageSize(1)
+                .build();
+
+        Page<ScheduleDto> findDates = scheduleService.findByDate(scheduleDto.getCreatedAt(), searchDto);
+
+        assertFalse(findDates.isEmpty());
+        assertThat(findDates.getContent().size()).isEqualTo(1);
+        assertThat(findDates.getTotalElements()).isEqualTo(1);
+        assertThat(findDates.getContent().get(0).getCreatedAt()).isEqualTo(scheduleDto.getCreatedAt());
+    }
+
+
+    @Test
+    void findByUpdateDateAndAuthor() {
+        memberRepository.deleteMemberAndSchedule();
+
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+
+
+        ScheduleDto schedule1 = ScheduleDto.builder()
+                .id(1L)
+                .title("Original Test Title")
+                .description("Original Test Description")
+                .author("Original Author")
+                .createdAt(new Date(2024, 07,10))
+                .updatedAt(new Date(2024, 07, 10))
+                .password("password1")
+                .memberDto(memberDto)
+                .build();
+
+        SearchDto searchDto = SearchDto.builder()
+                .page(0)
+                .pageSize(1)
+                .build();
+
+        ScheduleDto cratedSchedule = scheduleService.create(memberConverter.toDto(createdMember), schedule1);
+        Page<ScheduleDto> findSchedule = scheduleService.findByUpdatedDateAndAuthor(schedule1.getUpdatedAt(), cratedSchedule.getAuthor(), searchDto);
+        assertThat(findSchedule.getContent().get(0).getUpdatedAt()).isEqualTo(new Date(2024, 7, 10));
+        assertThat(findSchedule.getContent().get(0).getTitle()).isEqualTo("Original Test Title");
+    }
+
+    @Test
+    void findSchedulesByMemberId() {
+        memberRepository.deleteMemberAndSchedule();
+
+        // 테스트 멤버 생성
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+        assertNotNull(createdMember.getId(), "생성된 Member의 ID가 null이 아님을 확인합니다."); // ID가 null이 아님을 확인
+        memberDto = memberConverter.toDto(createdMember); // memberDto에 생성된 ID 반영
+
+        // 첫 번째 테스트 스케줄 생성
+        ScheduleDto schedule1 = ScheduleDto.builder()
+                .id(1L)
+                .title("Original Test Title 1")
+                .description("Original Test Description")
+                .author("Original Author")
+                .createdAt(new Date(2024, 07,10))
+                .updatedAt(new Date(2024, 07, 10))
+                .password("password1")
+                .memberDto(memberDto)
+                .build();
+        ScheduleDto createdSchedule1 = scheduleService.create(memberDto, schedule1);
+
+        // 두 번째 테스트 스케줄 생성
+        ScheduleDto schedule2 = ScheduleDto.builder()
+                .id(2L)
+                .title("Original Test Title 2")
+                .description("Original Test Description")
+                .author("Original Author")
+                .createdAt(new Date(2024, 07,10))
+                .updatedAt(new Date(2024, 07, 10))
+                .password("password2")
+                .memberDto(memberDto)
+                .build();
+        ScheduleDto createdSchedule2 = scheduleService.create(memberDto, schedule2);
+
+        SearchDto searchDto = SearchDto.builder()
+                .page(0)
+                .pageSize(1)
+                .build();
+
+        // 특정 멤버 ID와 스케줄 ID로 스케줄 리스트 조회
+        Page<ScheduleDto> schedules = scheduleService.findSchedulesByMemberId(searchDto, createdMember.getId(), createdSchedule1.getId());
+
+        // 검증
+        assertThat(schedules).isNotEmpty();
+        assertThat(schedules.getContent().size()).isEqualTo(2); // 두 개의 스케줄이 생성되었는지 확인
+        assertThat(schedules.getTotalElements()).isEqualTo(2);
+        assertThat(schedules).extracting("title").contains("Original Test Title 1", "Original Test Title 2"); // 제목 검증
+    }
+
+    @Test
+    void findScheduleByMemberId() {
+        memberRepository.deleteMemberAndSchedule();
+
+        // 테스트 멤버 생성
+        memberDto = MemberDto.builder()
+                .id(1L)
+                .userId("user_Id")
+                .password("testPassword")
+                .name("testName")
+                .email("test@test.com")
+                .build();
+
+        Member createdMember = memberRepository.createMember(memberConverter.toEntity(memberDto));
+        assertNotNull(createdMember.getId(), "생성된 Member의 ID가 null이 아님을 확인합니다."); // ID가 null이 아님을 확인
+        memberDto = memberConverter.toDto(createdMember); // memberDto에 생성된 ID 반영
+
+        // 테스트 스케줄 생성
+        ScheduleDto schedule1 = ScheduleDto.builder()
+                .id(1L)
+                .title("Original Test Title")
+                .description("Original Test Description")
+                .author("Original Author")
+                .createdAt(new Date(2024, 07,10))
+                .updatedAt(new Date(2024, 07, 10))
+                .password("password1")
+                .memberDto(memberDto)
+                .build();
+        ScheduleDto createdSchedule1 = scheduleService.create(memberDto, schedule1);
+
+        // 특정 멤버 ID와 스케줄 ID로 단일 스케줄 조회
+        ScheduleDto schedule = scheduleService.findScheduleByMemberId(createdMember.getId(), createdSchedule1.getId());
+
+        // 검증
+        assertThat(schedule).isNotNull();
+        assertThat(schedule.getTitle()).isEqualTo("Original Test Title");
+        assertThat(schedule.getDescription()).isEqualTo("Original Test Description");
+        assertThat(schedule.getAuthor()).isEqualTo("Original Author");
+        assertThat(schedule.getUpdatedAt()).isEqualTo(new Date(2024, 7, 10));
     }
 
 }
