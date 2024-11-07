@@ -33,6 +33,6 @@ public class ScheduleDto {
     private Date createdAt; //생성 날짜
     private Date updatedAt; //수정 날짜
     private Date deletedAt; //삭제 날짜
-    //@Valid
+
     private MemberDto memberDto;
 }
