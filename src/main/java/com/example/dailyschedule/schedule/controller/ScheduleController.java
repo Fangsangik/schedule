@@ -150,13 +150,9 @@ public class ScheduleController {
             return ResponseEntity.status(HttpStatus.OK).body(updatedSchedule);
         } catch (CustomException e) {
             log.error("일정을 수정하는데 실패했습니다. : {}", e.getMessage());
-            if (e.getErrorCode() == ErrorCode.PASSWORD_INCORRECT){
-                throw new CustomException(ErrorCode.PASSWORD_INCORRECT);
-            }
             throw new CustomException(ErrorCode.UPDATE_FAILED);
         }
     }
-
 
     //삭제
     @DeleteMapping("/{scheduleId}")
@@ -168,9 +164,6 @@ public class ScheduleController {
             return ResponseEntity.status(HttpStatus.OK).build();
         } catch (CustomException e) {
             log.error("일정을 삭제하는데 실패했습니다. : {}", e.getMessage());
-            if (e.getErrorCode() == ErrorCode.PASSWORD_INCORRECT){
-                throw new CustomException(ErrorCode.PASSWORD_INCORRECT);
-            }
             throw new CustomException(ErrorCode.DELETE_FAILED);
         }
     }
