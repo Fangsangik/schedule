@@ -260,7 +260,7 @@ jdbcTemplate.update(sql, member.getUserId(), member.getPassword(), member.getNam
 String sql = "INSERT INTO member (user_id, password, name, email, updated_at) VALUES (?, ?, ?, ?, ?)";
 jdbcTemplate.update(sql, member.getUserId(), member.getPassword(), member.getName(), member.getEmail(), member.getUpdatedAt());
 ```
-
+---
 
 **2. 코드 문제**
 1. Foreign Key Constraint 오류
@@ -300,6 +300,7 @@ Join을 진행했으면 스케줄 Repository의 RowMapper 부분에 회원에 �
 test를 돌렸을때 쿼리에 대한 값이 하나만 나오기를 예상했지만 쿼리가 두개가 나가는 상황
 1) userId를 유니크 키 값 설정
 2) 나중에 user_Id의 유니크 값 설정을 풀고, 매 test값을 초기화 함 -> @Transaction과 Beforeach를 사용해도 되었지만, 사용하지 않고 repository에서 초기화 하는 코드를 작성해 초기화 진행 후 test 실행
+---
 
 4. NullPointerException (가장 힘들었다..)
 1) schedule.getMember()가 null이기 때문에 getId()를 호출할 수 없었음.
@@ -460,7 +461,7 @@ public Member findById(Long id) {
 }
 ```
 EmptyResultDataAccessException에서 null이 발생해 retrun을 null로 처리 
-
+---
 
 5. AutoIncrement 사용했을때 최근 사용된 키 가져오는 문제
 ```
@@ -497,6 +498,8 @@ EmptyResultDataAccessException에서 null이 발생해 retrun을 null로 처리
 ```
 최근 조회된 Id 값을 가져오는 Last_insert_id를 사용 
 또 다른 방법으로는 GeneratedKeyHolder를 사용해 DB에 종속되지 않는 방식으로 새로 생성된 ID를 가져오는 방법이 있음 
+
+---
 
 6. 예외 처리 부족
 1 ) update
@@ -569,8 +572,12 @@ delete 또한 마찮가지
 
 3) testCode 작성했을때 IllegalArgumentException 예외 처리 부족
 
+---
+
 7. Paging 처리시 Limit 과 Offset 처리
 offset이 Limit을 초과하게 설정해서 Error가 발생했다. 
+
+---
 
 8. Controller에서 GetMapping시 parameter 불일치
 ```
@@ -638,6 +645,17 @@ updated_at = ? or udpated_at =? is null =?
 converter 부분을 Member를 포함시키지 않은것이 문제였다. 
 그래서 Member를 포함하고 있는 Converter와 포함하지 않은 Converter로 나눴다. 
 
+--- 
+## 👨‍💻 보안할 점 
+1. 스케줄을 조회 할때 Member에 대한 정보중 id 값 까지만 불러왔으면 좋겠지만 불필요한 부가 정보까지 불러오는 문제가 있다. Response 값에서 제어를 하는 방법중 찾아보니 JsonIgnore 라는 기능이 있는 것 같아 추후 적용할 예정 
+2. SQL문 join 문에 전보다는 익숙해 졌지만 아직 paging 처리라던지 paging 처리 할때 page 초과할 경우 예외를 두는 부분이 어려웠음.
+3. Test Code를 짠다고 짰지만 NPE를 못잡는 경우, Controller에서 터지는 Error들을 못잡는 것을 확인, 좀더 세밀하게 짜야 겠다는 생각이 들었다.
+
+--- 
+## 👍 좋았던 점 
+개인 과제이지만 Team을 이루어 진행했다. Team에서 leader를 맡게 되었고, 나도 많이 부족하지만, Team원 분들이 어렵거나 모르는 부분이 있다면 같이 찾아보고, 한번도 들어가보지 않았던 JDBC Template 내부 기능도 들어가서 Connection, Preparestatement, ReseultSet이 있는 것을 확인하는 계기가 되었다. 
+그리고 Controller에서 PathVariable, RequestBody의 annotation을 직접 들어가서 내 눈으로 그 안에 어던 기능이 있는지 다시 한번 확인 하는 계기가 되었다. 
+또한 나는 요구사항을 다 적었다고 생각했지만, 요구사항이 빠진 부분을 팀원 분들중 한분께서 발견해주셨고, 그 부분을 덕분에 수정해서 반영하게 되었다. 
 
 
 
