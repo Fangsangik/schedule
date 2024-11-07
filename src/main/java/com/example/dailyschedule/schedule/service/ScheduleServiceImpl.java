@@ -81,13 +81,8 @@ public class ScheduleServiceImpl {
     @Transactional(readOnly = true)
     public Page<ScheduleDto> findByUpdatedDateAndAuthor(Date updatedAt, String author, SearchDto searchDto) {
         scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author, searchDto);
-
         // 모든 결과를 리스트 형태로 반환
         Page<Schedule> schedules = scheduleRepositoryImpl.findSchedulesByUpdatedDateAndAuthor(updatedAt, author, searchDto);
-        if (schedules == null) {
-            throw new CustomException(ErrorCode.NOT_FOUND);
-        }
-
         return schedules.map(scheduleConverter::toDto);
     }
 

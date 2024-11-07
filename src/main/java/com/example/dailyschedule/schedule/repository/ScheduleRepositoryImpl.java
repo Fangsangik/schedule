@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -156,44 +157,52 @@ public class ScheduleRepositoryImpl {
     }
 
 
-    public Page<Schedule> findSchedulesByUpdatedDateAndAuthor(Date updatedAt, String author, SearchDto searchDto) {
-        if (updatedAt == null && author == null) {
-            throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
-        }
 
+    public Page<Schedule> findSchedulesByUpdatedDateAndAuthor(Date updatedAt, String author, SearchDto searchDto) {
         int limit = searchDto.getLimit();
         int offset = searchDto.getOffset();
 
-        // 전체 레코드 수를 먼저 조회하여 페이지가 범위를 넘는지 확인
-        String countSql = """
-            SELECT COUNT(*)
-              FROM schedule s
-              LEFT JOIN member m ON s.member_id = m.id
-              WHERE DATE(s.updated_at) = DATE(?) 
-                AND s.author = ?
-            """;
+        StringBuilder countSql = new StringBuilder("""
+        SELECT COUNT(*)
+          FROM schedule s
+          LEFT JOIN member m ON s.member_id = m.id
+          WHERE 1=1
+    """);
 
-        int total = jdbcTemplate.queryForObject(countSql, new Object[]{updatedAt, author}, Integer.class);
+        StringBuilder sql = new StringBuilder("""
+        SELECT s.*, 
+               m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
+               m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
+          FROM schedule s
+          LEFT JOIN member m ON s.member_id = m.id
+          WHERE 1=1
+    """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (updatedAt != null) {
+            countSql.append(" AND DATE(s.updated_at) = DATE(?)");
+            sql.append(" AND DATE(s.updated_at) = DATE(?)");
+            params.add(updatedAt);
+        }
+
+        if (author != null) {
+            countSql.append(" AND s.author = ?");
+            sql.append(" AND s.author = ?");
+            params.add(author);
+        }
+
+        sql.append(" ORDER BY s.updated_at DESC LIMIT ? OFFSET ?");
+        params.add(limit);
+        params.add(offset);
+
+        int total = jdbcTemplate.queryForObject(countSql.toString(), params.subList(0, params.size() - 2).toArray(), Integer.class);
 
         if (total == 0 || offset >= total) {
             return new PageImpl<>(Collections.emptyList(), PageRequest.of(offset / limit, limit), total);
         }
 
-        String sql = """
-            SELECT s.*, 
-                   m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
-                   m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
-              FROM schedule s
-              LEFT JOIN member m ON s.member_id = m.id
-              WHERE DATE(s.updated_at) = DATE(?) 
-                AND s.author = ?
-             ORDER BY s.updated_at DESC 
-             LIMIT ? OFFSET ?
-        """;
-
-        List<Schedule> schedules = jdbcTemplate.query(sql,
-                new Object[]{updatedAt, author, limit, offset},
-                scheduleRowMapper());
+        List<Schedule> schedules = jdbcTemplate.query(sql.toString(), params.toArray(), scheduleRowMapper());
 
         return new PageImpl<>(schedules, PageRequest.of(offset / limit, limit), total);
     }

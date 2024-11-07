@@ -44,8 +44,8 @@ public class ScheduleController {
     //updated 날짜와 작성자로 조회
     @GetMapping("/search")
     public ResponseEntity<?> findScheduleByUpdatedDateAndAuthor(
-            @RequestParam("updatedAt") Date updatedAt,
-            @RequestParam("author") String author, SearchDto searchDto) {
+            @RequestParam(required = false) Date updatedAt,
+            @RequestParam(required = false) String author, SearchDto searchDto) {
         try {
             Page<ScheduleDto> findSchedules = scheduleService.findByUpdatedDateAndAuthor(updatedAt, author, searchDto);
             return ResponseEntity.status(HttpStatus.OK).body(findSchedules);
