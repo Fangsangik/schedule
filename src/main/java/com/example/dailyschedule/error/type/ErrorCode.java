@@ -19,7 +19,8 @@ public enum ErrorCode {
     PASSWORD_INCORRECT("비밀번호가 일치하지 않습니다.", 401),
     ID_INCORRECT("ID 값이 일치하지 않습니다.", 401),
 
-    INTERNAL_SERVER_ERROR("서버 에러 입니다, 서버팀에 연락 주세요!!", 500);
+    INTERNAL_SERVER_ERROR("서버 에러 입니다, 서버팀에 연락 주세요!!", 500),
+    PAGE_DOES_NOT_EXIST("page가 존재하지 않습니다", 404);
 
     private final String message;
     private final int status;

@@ -34,7 +34,7 @@ public class ScheduleController {
         try {
             ScheduleDto findSchedule = scheduleService.findById(scheduleId);
             return ResponseEntity.status(HttpStatus.OK).body(findSchedule);
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("존재하지 않는 사용자 입니다 : {}", e.getMessage());
             throw new CustomException(ErrorCode.ID_NOT_FOUND);
 
@@ -49,7 +49,7 @@ public class ScheduleController {
         try {
             Page<ScheduleDto> findSchedules = scheduleService.findByUpdatedDateAndAuthor(updatedAt, author, searchDto);
             return ResponseEntity.status(HttpStatus.OK).body(findSchedules);
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("해당 정보를 찾을 수 없습니다: {}", e.getMessage());
             throw new CustomException(ErrorCode.UPDATE_FAILED);
         }
@@ -64,7 +64,7 @@ public class ScheduleController {
             Page<ScheduleDto> findDate = scheduleService.findByDate(updatedAt, searchDto);
             return ResponseEntity.ok(findDate);
 
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("해당 날짜를 조회할 수 없습니다: {}", e.getMessage());
             throw new CustomException(ErrorCode.DATE_NOT_FOUND);
         }
@@ -76,9 +76,9 @@ public class ScheduleController {
         try {
             Page<ScheduleDto> findDate = scheduleService.findByUpdatedDateDesc(searchDto);
             return ResponseEntity.ok(findDate);
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("해당 날짜를 내림차순으로 조회 할 수 없습니다. : {}", e.getMessage());
-            throw new CustomException(ErrorCode.DATE_NOT_FOUND);
+            throw new CustomException(ErrorCode.PAGE_DOES_NOT_EXIST);
         }
     }
 
@@ -92,7 +92,7 @@ public class ScheduleController {
         try {
             Page<ScheduleDto> findSchedules = scheduleService.findSchedulesByMemberId(searchDto, scheduleId, memberId);
             return ResponseEntity.status(HttpStatus.OK).body(findSchedules);
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("조회에 실패했습니다. : {} ", e.getMessage());
             throw new CustomException(ErrorCode.ID_NOT_FOUND);
 
@@ -107,7 +107,7 @@ public class ScheduleController {
         try {
             ScheduleDto findSchedule = scheduleService.findScheduleByMemberId(memberId, scheduleId);
             return ResponseEntity.status(HttpStatus.OK).body(findSchedule);
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("조회에 실패했습니다. : {} ", e.getMessage());
             throw new CustomException(ErrorCode.ID_NOT_FOUND);
         }
@@ -122,9 +122,9 @@ public class ScheduleController {
         try {
             SingleDateScheduleDto dateById = scheduleService.findDateById(scheduleId, field, date);
             return ResponseEntity.status(HttpStatus.OK).body(dateById);
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("해당 정보를 찾을 수 없습니다: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            throw new CustomException(ErrorCode.DATE_NOT_FOUND);
         }
     }
 
@@ -136,7 +136,7 @@ public class ScheduleController {
         try {
             ScheduleDto createSchedule = scheduleService.create(scheduleDto.getMemberDto(), scheduleDto);
             return ResponseEntity.status(HttpStatus.CREATED).body(createSchedule);
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("일정을 생성하는데 실패했습니다.. : {}", e.getMessage());
             throw new CustomException(ErrorCode.CREATION_FAILED);
         }
@@ -150,7 +150,7 @@ public class ScheduleController {
         try {
             ScheduleDto updatedSchedules = scheduleService.updateTitleAndAuthor(scheduleId, updatedScheduleDto);
             return ResponseEntity.status(HttpStatus.OK).body(updatedSchedules);
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("일정을 수정하는데 실패했습니다. : {} ", e.getMessage());
             throw new CustomException(ErrorCode.UPDATE_FAILED);
         }
@@ -165,8 +165,11 @@ public class ScheduleController {
         try {
             scheduleService.deleteById(scheduleId, deleteScheduleRequest.getPassword());
             return ResponseEntity.status(HttpStatus.OK).build();
-        } catch (IllegalArgumentException e) {
+        } catch (CustomException e) {
             log.error("일정을 삭제하는데 실패했습니다. : {}", e.getMessage());
+            if (e.getErrorCode().equals(ErrorCode.PASSWORD_INCORRECT)) {
+                throw new CustomException(ErrorCode.PASSWORD_INCORRECT);
+            }
             throw new CustomException(ErrorCode.DELETE_FAILED);
         }
     }
