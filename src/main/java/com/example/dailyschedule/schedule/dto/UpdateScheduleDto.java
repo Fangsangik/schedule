@@ -1,6 +1,7 @@
 package com.example.dailyschedule.schedule.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,6 +13,9 @@ import lombok.NoArgsConstructor;
 @Builder
 //title author password request
 public class UpdateScheduleDto {
+    @NotNull(message = "ID는 필수 입니다.")
+    private Long id;
+
     @NotBlank(message = "할일은 필수 항목입니다.")
     private String title; // 할일
 
