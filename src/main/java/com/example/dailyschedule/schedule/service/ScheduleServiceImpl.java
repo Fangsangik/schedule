@@ -52,16 +52,12 @@ public class ScheduleServiceImpl {
             log.error("잘못된 회원 정보입니다. MemberDto: {}", memberDto);
             throw new CustomException(ErrorCode.INVALID_MEMBER_INFO);
         }
-
         // MemberService를 통해 Member 정보 가져오기
         Member member = memberConverter.toEntity(memberService.findById(memberDto.getId()));
-
         // 중복 ID 검증
         scheduleValidation.validationOfDuplicateId(scheduleDto.getId());
-
         // Member 객체를 함께 전달하여 Schedule 생성
         Schedule saveSchedule = scheduleRepositoryImpl.createSchedule(scheduleConverter.toEntityIncludeMember(scheduleDto, member), member);
-
         // ScheduleDto 반환
         return scheduleConverter.toDto(saveSchedule);
     }

@@ -9,6 +9,7 @@ import com.example.dailyschedule.schedule.dto.SearchDto;
 import com.example.dailyschedule.schedule.dto.UpdateScheduleDto;
 import com.example.dailyschedule.schedule.entity.Schedule;
 import com.example.dailyschedule.schedule.repository.ScheduleRepositoryImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 
 
@@ -16,6 +17,7 @@ import java.sql.Date;
 
 import static com.example.dailyschedule.error.type.ErrorCode.*;
 
+@Slf4j
 public class ScheduleValidation {
 
     private final ScheduleRepositoryImpl scheduleRepository;
@@ -28,9 +30,11 @@ public class ScheduleValidation {
 
     // 비밀번호 검증 메서드
     public void validatePassword(String inputPassword, Schedule schedule) {
+        log.debug("입력된 비밀번호: {}", inputPassword);
+        log.debug("데이터베이스 저장 비밀번호: {}", schedule.getPassword());
+
         if (!schedule.getPassword().equals(inputPassword)) {
             throw new CustomException(PASSWORD_INCORRECT);
-
         }
     }
 

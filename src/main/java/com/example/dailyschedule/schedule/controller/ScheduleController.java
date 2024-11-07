@@ -35,7 +35,6 @@ public class ScheduleController {
         } catch (IllegalArgumentException e) {
             log.error("존재하지 않는 사용자 입니다 : {}", e.getMessage());
             throw new CustomException(ErrorCode.ID_NOT_FOUND);
-
         }
     }
 
@@ -51,7 +50,7 @@ public class ScheduleController {
             return ResponseEntity.status(HttpStatus.OK).body(dateById);
         } catch (IllegalArgumentException e) {
             log.error("해당 정보를 찾을 수 없습니다: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            throw new CustomException(ErrorCode.ID_NOT_FOUND);
         }
     }
 
@@ -118,8 +117,7 @@ public class ScheduleController {
     //Page 조회
     @GetMapping("/{memberId}/schedules/{scheduleId}")
     public ResponseEntity<?> findScheduleByMemberId(@PathVariable Long memberId,
-                                                    @PathVariable Long scheduleId
-    ) {
+                                                    @PathVariable Long scheduleId) {
         try {
             ScheduleDto findSchedule = scheduleService.findScheduleByMemberId(memberId, scheduleId);
             return ResponseEntity.status(HttpStatus.OK).body(findSchedule);
@@ -133,7 +131,6 @@ public class ScheduleController {
     @PostMapping("/")
     public ResponseEntity<?> createSchedule(
             @Valid @RequestBody ScheduleDto scheduleDto) {
-
         try {
             ScheduleDto createSchedule = scheduleService.create(scheduleDto.getMemberDto(), scheduleDto);
             return ResponseEntity.status(HttpStatus.CREATED).body(createSchedule);
@@ -154,6 +151,9 @@ public class ScheduleController {
             return ResponseEntity.status(HttpStatus.OK).body(updatedSchedule);
         } catch (CustomException e) {
             log.error("일정을 수정하는데 실패했습니다. : {}", e.getMessage());
+            if (e.getErrorCode() == ErrorCode.PASSWORD_INCORRECT){
+                throw new CustomException(ErrorCode.PASSWORD_INCORRECT);
+            }
             throw new CustomException(ErrorCode.UPDATE_FAILED);
         }
     }
@@ -163,12 +163,15 @@ public class ScheduleController {
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<?> deleteSchedule(
             @PathVariable Long scheduleId,
-            @Valid @RequestBody String password) {
+            @Valid @RequestBody DeleteDto deleteDto) {
         try {
-            scheduleService.deleteById(scheduleId, password);
+            scheduleService.deleteById(scheduleId, deleteDto.getPassword());
             return ResponseEntity.status(HttpStatus.OK).build();
         } catch (CustomException e) {
             log.error("일정을 삭제하는데 실패했습니다. : {}", e.getMessage());
+            if (e.getErrorCode() == ErrorCode.PASSWORD_INCORRECT){
+                throw new CustomException(ErrorCode.PASSWORD_INCORRECT);
+            }
             throw new CustomException(ErrorCode.DELETE_FAILED);
         }
     }

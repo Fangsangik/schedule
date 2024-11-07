@@ -121,3 +121,5 @@ WHERE DATE(s.updated_at) = '2024-11-05'
   AND s.author = 'UpdatedAuthor';
 
 select * from schedule;
+delete from schedule where id = 796;
+select * from schedule where id = 796;
