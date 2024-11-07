@@ -65,22 +65,14 @@ public class ScheduleServiceImpl {
     //수정일과 작성자 명으로 스케줄 조회
     @Transactional(readOnly = true)
     public List<ScheduleDto> findSchedules(Date updatedAt, String author) {
-        List<Schedule> schedules;
+        // 유효성 검사 수행
+        scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author);
+        // 날짜와 작성자 기준으로 조회
+        List<Schedule> schedules = scheduleRepositoryImpl.findSchedulesByUpdatedDateAndAuthor(updatedAt, author);
 
-        if (updatedAt == null && author == null) {
-            // 조건이 없을 경우 내림차순 조회
-            schedules = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc();
-        } else {
-            // 유효성 검사 수행
-            scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author);
-
-            // 날짜와 작성자 기준으로 조회
-            schedules = scheduleRepositoryImpl.findSchedulesByUpdatedDateAndAuthor(updatedAt, author);
-        }
-
-        return schedules.stream()
-                .map(scheduleConverter::toDto)
-                .collect(Collectors.toList());
+        return schedules.stream().
+                map(scheduleConverter::toDto).
+                collect(Collectors.toList());
     }
 
     @Transactional

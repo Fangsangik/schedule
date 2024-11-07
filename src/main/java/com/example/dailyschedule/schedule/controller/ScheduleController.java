@@ -67,13 +67,13 @@ public class ScheduleController {
 
 
     // 날짜와 작성자 기준으로 스케줄 조회
-    @GetMapping
-    public ResponseEntity<List<ScheduleDto>> getSchedules(
+    @GetMapping("/search")
+    public ResponseEntity<?> findScheduleByUpdatedDateAndAuthor(
             @RequestParam(required = false) Date updatedAt,
             @RequestParam(required = false) String author) {
         try {
-            List<ScheduleDto> schedules = scheduleService.findSchedules(updatedAt, author);
-            return ResponseEntity.ok(schedules);
+            List<ScheduleDto> findSchedules = scheduleService.findSchedules(updatedAt, author);
+            return ResponseEntity.status(HttpStatus.OK).body(findSchedules);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         } catch (Exception e) {

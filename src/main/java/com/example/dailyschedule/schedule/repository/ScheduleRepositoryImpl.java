@@ -113,13 +113,17 @@ public class ScheduleRepositoryImpl {
         List<Object> params = new ArrayList<>();
 
         if (updatedAt != null) {
-            sql.append(" AND updated_at = ?");
+            sql.append(" AND (updated_at = ?)");
             params.add(updatedAt);
+        } else {
+            sql.append(" AND (updated_at IS NULL OR updated_at IS NOT NULL)"); // 항상 참이 되도록 조건 추가
         }
 
         if (author != null) {
-            sql.append(" AND author = ?");
+            sql.append(" AND (author = ?)");
             params.add(author);
+        } else {
+            sql.append(" AND (author IS NULL OR author IS NOT NULL)"); // 항상 참이 되도록 조건 추가
         }
 
         sql.append(" ORDER BY updated_at DESC");
