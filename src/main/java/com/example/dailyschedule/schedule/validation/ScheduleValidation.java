@@ -35,9 +35,14 @@ public class ScheduleValidation {
 
     // ID 검증 메서드
     public void validateId(Long inputId, Schedule schedule) {
+        if (schedule == null) {
+            throw new CustomException(ID_NOT_FOUND);
+        }
+
         if (!inputId.equals(schedule.getId())) {
             throw new CustomException(ID_INCORRECT);
         }
+
     }
 
     // ID 중복 검증 메서드
@@ -74,6 +79,11 @@ public class ScheduleValidation {
     }
 
     public Schedule validateAndPrepareUpdatedSchedule(UpdatedScheduleDto updatedScheduleDto, Schedule existingSchedule) {
+
+        if (existingSchedule == null) {
+            throw new CustomException(ID_NOT_FOUND);
+        }
+
         // ID와 비밀번호 유효성 검사
         if (!existingSchedule.getPassword().equals(updatedScheduleDto.getPassword())) {
             throw new CustomException(PASSWORD_INCORRECT);

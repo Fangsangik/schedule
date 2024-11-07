@@ -169,6 +169,12 @@ public class ScheduleServiceImpl {
     }
 
 
+    /**
+     * created_at
+     * updated_at
+     * deleted_at
+     * 조건 날짜에 따라 조회 할 수 있는 메서드
+     */
     private static SingleDateScheduleDto getSingleDateScheduleDto(String field, Schedule findDate) {
         Date selectDate;
 

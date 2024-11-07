@@ -51,7 +51,10 @@ public class ScheduleController {
             return ResponseEntity.status(HttpStatus.OK).body(findSchedules);
         } catch (CustomException e) {
             log.error("해당 정보를 찾을 수 없습니다: {}", e.getMessage());
-            throw new CustomException(ErrorCode.UPDATE_FAILED);
+            if (e.getErrorCode() == ErrorCode.PASSWORD_INCORRECT) {
+                log.error("password가 일치하지 않습니다 : {}", e.getMessage());
+                throw new CustomException(ErrorCode.PASSWORD_INCORRECT);
+            }
         }
     }
 
@@ -63,7 +66,6 @@ public class ScheduleController {
         try {
             Page<ScheduleDto> findDate = scheduleService.findByDate(updatedAt, searchDto);
             return ResponseEntity.ok(findDate);
-
         } catch (CustomException e) {
             log.error("해당 날짜를 조회할 수 없습니다: {}", e.getMessage());
             throw new CustomException(ErrorCode.DATE_NOT_FOUND);
@@ -95,7 +97,6 @@ public class ScheduleController {
         } catch (CustomException e) {
             log.error("조회에 실패했습니다. : {} ", e.getMessage());
             throw new CustomException(ErrorCode.ID_NOT_FOUND);
-
         }
     }
 
@@ -123,6 +124,10 @@ public class ScheduleController {
             SingleDateScheduleDto dateById = scheduleService.findDateById(scheduleId, field, date);
             return ResponseEntity.status(HttpStatus.OK).body(dateById);
         } catch (CustomException e) {
+            if (e.getErrorCode() == ErrorCode.ID_NOT_FOUND) {
+                log.error("해당 ID를 찾을 수 없습니다 : {}" , e.getMessage());
+                throw new CustomException(ErrorCode.ID_NOT_FOUND);
+            }
             log.error("해당 정보를 찾을 수 없습니다: {}", e.getMessage());
             throw new CustomException(ErrorCode.DATE_NOT_FOUND);
         }
@@ -151,6 +156,13 @@ public class ScheduleController {
             ScheduleDto updatedSchedules = scheduleService.updateTitleAndAuthor(scheduleId, updatedScheduleDto);
             return ResponseEntity.status(HttpStatus.OK).body(updatedSchedules);
         } catch (CustomException e) {
+            if (e.getErrorCode() == ErrorCode.PASSWORD_INCORRECT) {
+                log.error("비밀번호를 찾을 수 없습니다. : {}", e.getMessage());
+                throw new CustomException(ErrorCode.PASSWORD_INCORRECT);
+            } else if (e.getErrorCode() == ErrorCode.ID_NOT_FOUND) {
+                log.error("이미 삭제된 정보입니다. : {}", e.getMessage());
+                throw new CustomException(ErrorCode.ID_NOT_FOUND);
+            }
             log.error("일정을 수정하는데 실패했습니다. : {} ", e.getMessage());
             throw new CustomException(ErrorCode.UPDATE_FAILED);
         }
