@@ -70,16 +70,9 @@ public class ScheduleServiceImpl {
     //업데이트 날짜와 작성자 명으로 스케줄 조회
     @Transactional(readOnly = true)
     public List<ScheduleDto> findByUpdatedDateAndAuthor(Date updatedAt, String author) {
-        List<Schedule> schedules;
-
-        if (updatedAt == null && author == null) {
-            schedules = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc();
-        } else {
-            scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author);
-
-            // 모든 결과를 리스트 형태로 반환
-            schedules = scheduleRepositoryImpl.findSchedulesByUpdatedDateAndAuthor(updatedAt, author);
-        }
+        scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author);
+        // 모든 결과를 리스트 형태로 반환
+        List<Schedule> schedules = scheduleRepositoryImpl.findSchedulesByUpdatedDateAndAuthor(updatedAt, author);
         return schedules.stream()
                 .map(scheduleConverter::toDto)
                 .collect(Collectors.toList());

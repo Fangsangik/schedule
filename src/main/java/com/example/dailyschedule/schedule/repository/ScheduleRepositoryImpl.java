@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -140,23 +141,36 @@ public class ScheduleRepositoryImpl {
 
     public List<Schedule> findSchedulesByUpdatedDateAndAuthor(Date updatedAt, String author) {
         if (updatedAt == null && author == null) {
-            throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
+            throw new IllegalArgumentException("조회할 조건이 없습니다.");
         }
 
-        String sql = """
+        StringBuilder sql = new StringBuilder("""
                     SELECT s.*, 
                            m.id AS member_id, m.user_id AS user_id, m.password AS member_password, 
                            m.name AS member_name, m.email AS member_email, m.updated_at AS member_updated_at
                       FROM schedule s
                       LEFT JOIN member m ON s.member_id = m.id
-                      WHERE DATE(s.updated_at) = DATE(?) 
-                       AND s.author = ?
-                     ORDER BY s.updated_at DESC
-                """;
+                      WHERE 1=1
+                """);
 
-        return jdbcTemplate.query(sql, new Object[]{updatedAt, author}, scheduleRowMapper());
+        List<Object> params = new ArrayList<>();
+
+        if (updatedAt != null) {
+            sql.append(" AND (DATE(s.updated_at) = DATE(?) OR ? IS NULL)");
+            params.add(updatedAt);
+            params.add(updatedAt);
+        }
+
+        if (author != null) {
+            sql.append(" AND (s.author = ? OR ? IS NULL)");
+            params.add(author);
+            params.add(author);
+        }
+
+        sql.append(" ORDER BY s.updated_at DESC");
+
+        return jdbcTemplate.query(sql.toString(), params.toArray(), scheduleRowMapper());
     }
-
 
     public List<Schedule> findByDate(Date date) {
         if (date == null) {
