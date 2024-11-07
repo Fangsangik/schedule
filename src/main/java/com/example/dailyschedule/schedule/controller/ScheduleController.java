@@ -45,8 +45,9 @@ public class ScheduleController {
             List<ScheduleDto> findSchedules = scheduleService.findByUpdatedDateAndAuthor(updatedAt, author);
             return ResponseEntity.status(HttpStatus.OK).body(findSchedules);
         } catch (IllegalArgumentException e) {
-            log.error("해당 정보를 찾을 수 없습니다: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
