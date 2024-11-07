@@ -149,6 +149,13 @@ public class ScheduleController {
             ScheduleDto updatedSchedule = scheduleService.updateTitleAndAuthor(scheduleId, updateScheduleDto);
             return ResponseEntity.status(HttpStatus.OK).body(updatedSchedule);
         } catch (CustomException e) {
+            if (e.getErrorCode() == ErrorCode.PASSWORD_INCORRECT) {
+                log.error("비밀번호가 일치하지 않습니다. : {}", e.getMessage());
+                throw new CustomException(ErrorCode.PASSWORD_INCORRECT);
+            } else if (e.getErrorCode() == ErrorCode.ID_NOT_FOUND) {
+                log.error("이미 삭제된 회원입니다. {}", e.getMessage());
+                throw new CustomException(ErrorCode.ID_NOT_FOUND);
+            }
             log.error("일정을 수정하는데 실패했습니다. : {}", e.getMessage());
             throw new CustomException(ErrorCode.UPDATE_FAILED);
         }
@@ -163,6 +170,10 @@ public class ScheduleController {
             scheduleService.deleteById(scheduleId, deleteDto.getPassword());
             return ResponseEntity.status(HttpStatus.OK).build();
         } catch (CustomException e) {
+            if (e.getErrorCode() == ErrorCode.PASSWORD_INCORRECT) {
+                log.error("비밀번호가 일치하지 않습니다. : {}", e.getMessage());
+                throw new CustomException(ErrorCode.PASSWORD_INCORRECT);
+            }
             log.error("일정을 삭제하는데 실패했습니다. : {}", e.getMessage());
             throw new CustomException(ErrorCode.DELETE_FAILED);
         }

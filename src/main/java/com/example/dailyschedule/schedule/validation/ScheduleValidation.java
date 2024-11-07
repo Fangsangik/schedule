@@ -79,6 +79,10 @@ public class ScheduleValidation {
     }
 
     public Schedule validateAndPrepareUpdatedSchedule(UpdateScheduleDto updateScheduleDto, Schedule existingSchedule) {
+        if (existingSchedule == null) {
+            throw new CustomException(ID_NOT_FOUND);
+        }
+
         // ID와 비밀번호 유효성 검사
         if (!existingSchedule.getPassword().equals(updateScheduleDto.getPassword())) {
             throw new CustomException(PASSWORD_INCORRECT);
