@@ -43,17 +43,6 @@ public class ScheduleServiceImpl {
         return scheduleConverter.toDto(existId);
     }
 
-    //수정일과 작성자 명으로 스케줄 조회
-    @Transactional(readOnly = true)
-    public List<ScheduleDto> findByUpdatedDateAndAuthor(Date updatedAt, String author) {
-        scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author);
-
-        // 모든 결과를 리스트 형태로 반환
-        List<Schedule> schedules = scheduleRepositoryImpl.findSchedulesByUpdatedDateAndAuthor(updatedAt, author);
-        return schedules.stream()
-                .map(scheduleConverter::toDto)
-                .collect(Collectors.toList());
-    }
 
     //선택 일정 조회 (선택한 일정 정보 불러오기)
     @Transactional(readOnly = true)
@@ -72,15 +61,26 @@ public class ScheduleServiceImpl {
         scheduleRepositoryImpl.updateSchedule(updatedSchedule);
         return scheduleConverter.toDto(updatedSchedule);
     }
-    //내림차순 조회
+
+    //수정일과 작성자 명으로 스케줄 조회
     @Transactional(readOnly = true)
-    public List<ScheduleDto> findByUpdatedDateDesc() {
-        List<Schedule> byUpdatedDateByDesc = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc();
-        List<ScheduleDto> scheduleDtos = new ArrayList<>();
-        for (Schedule schedule : byUpdatedDateByDesc) {
-            scheduleDtos.add(scheduleConverter.toDto(schedule));
+    public List<ScheduleDto> findSchedules(Date updatedAt, String author) {
+        List<Schedule> schedules;
+
+        if (updatedAt == null && author == null) {
+            // 조건이 없을 경우 내림차순 조회
+            schedules = scheduleRepositoryImpl.findAllOrderByUpdatedDateDesc();
+        } else {
+            // 유효성 검사 수행
+            scheduleValidation.validateUpdateDateAndAuthor(updatedAt, author);
+
+            // 날짜와 작성자 기준으로 조회
+            schedules = scheduleRepositoryImpl.findSchedulesByUpdatedDateAndAuthor(updatedAt, author);
         }
-        return scheduleDtos;
+
+        return schedules.stream()
+                .map(scheduleConverter::toDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional

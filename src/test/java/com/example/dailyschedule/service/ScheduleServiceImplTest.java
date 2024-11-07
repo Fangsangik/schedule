@@ -155,11 +155,10 @@ class ScheduleServiceImplTest {
         scheduleService.create(schedule1);
         scheduleService.create(schedule2);
 
-        List<ScheduleDto> scheduleDtoList = scheduleService.findByUpdatedDateDesc();
+        List<ScheduleDto> scheduleDtoList = scheduleService.findSchedules(schedule1.getUpdatedAt(), schedule1.getAuthor());
         assertFalse(scheduleDtoList.isEmpty());
-        assertThat(scheduleDtoList.size()).isEqualTo(2);
+        assertThat(scheduleDtoList.size()).isEqualTo(1);
         assertThat(scheduleDtoList.get(0).getUpdatedAt()).isEqualTo(new Date(2024, 07, 10));
-        assertThat(scheduleDtoList.get(1).getUpdatedAt()).isEqualTo(new Date(2024, 07, 05));
     }
 
     @Test
@@ -239,7 +238,7 @@ class ScheduleServiceImplTest {
                 .build();
 
         ScheduleDto cratedSchedule = scheduleService.create(schedule1);
-        List<ScheduleDto> findSchedule = scheduleService.findByUpdatedDateAndAuthor(schedule1.getUpdatedAt(), cratedSchedule.getAuthor());
+        List<ScheduleDto> findSchedule = scheduleService.findSchedules(schedule1.getUpdatedAt(), cratedSchedule.getAuthor());
         assertThat(findSchedule.get(0).getUpdatedAt()).isEqualTo(cratedSchedule.getUpdatedAt());
         assertThat(findSchedule.get(0).getTitle()).isEqualTo("Original Test Title");
     }

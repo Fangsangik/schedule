@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -107,13 +108,23 @@ public class ScheduleRepositoryImpl {
 
     //수정일과 작성자 명으로 스케줄 조회
     public List<Schedule> findSchedulesByUpdatedDateAndAuthor(Date updatedAt, String author) {
-        if (updatedAt == null && author == null) {
-            throw new IllegalArgumentException("해당 이름으로 수정된 날짜를 찾을 수 없습니다.");
+        StringBuilder sql = new StringBuilder("SELECT * FROM schedule WHERE 1=1");
+
+        List<Object> params = new ArrayList<>();
+
+        if (updatedAt != null) {
+            sql.append(" AND updated_at = ?");
+            params.add(updatedAt);
         }
 
-        String sql = "SELECT * FROM schedule WHERE (updated_at = ? OR ? IS NULL) OR (author = ? OR ? IS NULL) ORDER BY updated_at DESC";
+        if (author != null) {
+            sql.append(" AND author = ?");
+            params.add(author);
+        }
 
-        return jdbcTemplate.query(sql, new Object[]{updatedAt, updatedAt, author, author}, scheduleRowMapper());
+        sql.append(" ORDER BY updated_at DESC");
+
+        return jdbcTemplate.query(sql.toString(), params.toArray(), scheduleRowMapper());
     }
 
     //내림차순 조회

@@ -37,20 +37,6 @@ public class ScheduleController {
         }
     }
 
-    //수정일과 작성자 명으로 스케줄 조회
-    @GetMapping("/search")
-    public ResponseEntity<?> findScheduleByUpdatedDateAndAuthor(
-            @RequestParam("updatedAt") Date updatedAt,
-            @RequestParam("author") String author) {
-        try {
-            List<ScheduleDto> findSchedules = scheduleService.findByUpdatedDateAndAuthor(updatedAt, author);
-            return ResponseEntity.status(HttpStatus.OK).body(findSchedules);
-        } catch (IllegalArgumentException e) {
-            log.error("해당 정보를 찾을 수 없습니다: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
-    }
-
     @GetMapping("/date/{scheduleId}")
     public ResponseEntity<?> findByScheduleUpdatedDate(
             @PathVariable Long scheduleId,
@@ -79,15 +65,19 @@ public class ScheduleController {
         }
     }
 
-    //내림차순 조회
-    @GetMapping("/dateDesc")
-    public ResponseEntity<?> findByUpdatedDateDesc() {
+
+    // 날짜와 작성자 기준으로 스케줄 조회
+    @GetMapping
+    public ResponseEntity<List<ScheduleDto>> getSchedules(
+            @RequestParam(required = false) Date updatedAt,
+            @RequestParam(required = false) String author) {
         try {
-            List<ScheduleDto> findDate = scheduleService.findByUpdatedDateDesc();
-            return ResponseEntity.ok(findDate);
+            List<ScheduleDto> schedules = scheduleService.findSchedules(updatedAt, author);
+            return ResponseEntity.ok(schedules);
         } catch (IllegalArgumentException e) {
-            log.error("해당 날짜를 내림차순으로 조회 할 수 없습니다. : {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
