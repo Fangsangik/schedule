@@ -54,3 +54,5 @@ select * from schedule
 
 # 날짜로 찾기
 select * from schedule where updated_at = '2024-11-01-00-03';
+alter table schedule modify column updated_at DATETIME not null ;
+desc schedule;
