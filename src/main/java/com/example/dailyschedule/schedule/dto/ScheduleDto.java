@@ -30,7 +30,11 @@ public class ScheduleDto {
 
     @Size(max = 500, message = "상세 내용은 500자 이내로 작성 가능 합니다.")
     private String description; //상세 내용
+
+    @NotNull(message = "생성 날짜는 필수 입니다.")
     private Date createdAt; //생성 날짜
+
+    @NotNull(message = "수정 날짜는 필수 입니다.")
     private Date updatedAt; //수정 날짜
     private Date deletedAt; //삭제 날짜
 
