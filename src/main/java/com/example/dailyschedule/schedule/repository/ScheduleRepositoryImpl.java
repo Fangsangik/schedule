@@ -25,7 +25,6 @@ public class ScheduleRepositoryImpl {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-
     // userId 제거
     public Schedule createSchedule(Schedule schedule, Member member) {
 
